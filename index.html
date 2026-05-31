@@ -3,36 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MindMap</title>
+<title>MindMap — Liquid Glass Edition</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
-  --glass-bg: rgba(255,255,255,0.07);
-  --glass-border: rgba(255,255,255,0.15);
-  --glass-hover: rgba(255,255,255,0.12);
-  --glass-active: rgba(255,255,255,0.18);
-  --text-primary: rgba(255,255,255,0.95);
-  --text-secondary: rgba(255,255,255,0.6);
-  --text-muted: rgba(255,255,255,0.35);
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-hover: rgba(255, 255, 255, 0.09);
+  --glass-active: rgba(255, 255, 255, 0.15);
+  --text-primary: rgba(255, 255, 255, 0.96);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --bg-glow-color: rgba(15, 50, 180, 0.4);
 }
 body {
   font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
-  background:#050810;
+  background:#03060f;
   color:var(--text-primary);
   height:100vh; overflow:hidden;
   position:relative; cursor:default; user-select:none;
 }
+/* Liquid Glass Background Glows */
 body::before {
   content:''; position:fixed; bottom:-100px; left:50%; transform:translateX(-50%);
   width:140vw; height:70vh;
-  background:radial-gradient(ellipse at center bottom,rgba(15,50,180,0.45) 0%,rgba(10,25,100,0.25) 40%,transparent 70%);
-  pointer-events:none; z-index:0;
+  background:radial-gradient(ellipse at center bottom, var(--bg-glow-color) 0%, rgba(10,25,100,0.15) 50%, transparent 80%);
+  pointer-events:none; z-index:0; transition: background 0.5s ease;
 }
 body::after {
   content:''; position:fixed; bottom:-50px; left:50%; transform:translateX(-50%);
   width:80vw; height:40vh;
-  background:radial-gradient(ellipse at center bottom,rgba(30,80,255,0.2) 0%,transparent 60%);
+  background:radial-gradient(ellipse at center bottom, rgba(255,255,255,0.05) 0%, transparent 70%);
   pointer-events:none; z-index:0;
 }
 .stars { position:fixed; inset:0; z-index:0; pointer-events:none; }
@@ -43,257 +45,227 @@ body::after {
 #canvas:active { cursor:grabbing; }
 svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:visible; }
 
-/* ── Nodes ── */
+/* ── Liquid Nodes ── */
 .node {
   position:absolute; z-index:3; transform:translate(-50%,-50%);
-  cursor:pointer;
+  cursor:pointer; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.node-inner {
-  display:flex; flex-direction:column; align-items:center; gap:0;
-}
+.node:hover { transform: translate(-50%,-50%) scale(1.03); }
+.node-inner { display:flex; flex-direction:column; align-items:center; gap:0; }
 
-/* header photo strip */
 .node-header-photo {
-  width:100%; max-width:160px; border-radius:14px 14px 0 0; overflow:hidden;
-  border:1px solid rgba(255,255,255,0.12); border-bottom:none;
-  backdrop-filter:blur(10px);
+  width:100%; max-width:170px; border-radius:24px 24px 0 0; overflow:hidden;
+  border:1px solid rgba(255,255,255,0.1); border-bottom:none;
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
 }
-.node-header-photo img { width:100%; height:90px; object-fit:cover; display:block; }
+.node-header-photo img { width:100%; height:95px; object-fit:cover; display:block; }
 
 .node-pill {
-  backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  backdrop-filter:blur(30px) saturate(210%);
+  -webkit-backdrop-filter:blur(30px) saturate(210%);
   background:var(--glass-bg);
   border:1px solid var(--glass-border);
-  border-radius:999px;
-  padding:10px 20px;
-  font-size:13px; font-weight:500; letter-spacing:0.01em;
+  border-radius:999px; padding:12px 24px;
+  font-size:13.5px; font-weight:500; letter-spacing:0.01em;
   color:var(--text-primary); white-space:nowrap;
-  box-shadow:0 4px 24px rgba(0,0,0,0.35),0 1px 0 rgba(255,255,255,0.08) inset;
-  transition:all 0.2s ease;
-  display:flex; align-items:center; gap:8px;
-  position:relative; overflow:hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 1px 1px rgba(255,255,255,0.1) inset;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display:flex; align-items:center; gap:10px;
 }
-.node-pill::before {
-  content:''; position:absolute; inset:0; border-radius:inherit;
-  background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 50%);
-  pointer-events:none;
-}
-/* when header photo exists, square off the top */
-.has-header-photo .node-pill {
-  border-radius:0 0 999px 999px;
-  border-top:none;
-}
+.has-header-photo .node-pill { border-radius:0 0 24px 24px; border-top:none; }
 
-/* photo-only node */
 .node-photo-only .node-pill { display:none; }
 .node-photo-only .node-photo-bubble {
-  border-radius:14px; overflow:hidden;
-  border:1px solid rgba(255,255,255,0.15);
-  box-shadow:0 4px 24px rgba(0,0,0,0.5);
-  backdrop-filter:blur(10px);
+  border-radius:24px; overflow:hidden;
+  border:1px solid rgba(255,255,255,0.12);
+  box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  transition: all 0.3s ease;
 }
-.node-photo-bubble img { width:120px; height:120px; object-fit:cover; display:block; }
+.node-photo-bubble img { width:130px; height:130px; object-fit:cover; display:block; }
 
 .node:hover .node-pill {
-  background:var(--glass-hover); border-color:rgba(255,255,255,0.28);
-  box-shadow:0 0 20px rgba(255,255,255,0.06),0 8px 32px rgba(0,0,0,0.4);
+  background:var(--glass-hover); border-color:rgba(255,255,255,0.3);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 1px 2px rgba(255,255,255,0.2) inset;
 }
-.node-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 8px currentColor; }
+.node-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; box-shadow:0 0 12px currentColor; }
 
-/* center node */
 .node-center .node-pill {
-  padding:16px 32px; font-size:18px; font-weight:600;
-  border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.1);
-  box-shadow:0 0 60px rgba(100,150,255,0.15),0 8px 40px rgba(0,0,0,0.5),0 1px 0 rgba(255,255,255,0.12) inset;
-  letter-spacing:0.02em;
+  padding:18px 36px; font-size:19px; font-weight:600;
+  border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.08);
+  box-shadow:0 0 50px rgba(255,255,255,0.05), 0 16px 48px rgba(0,0,0,0.5);
 }
 
-/* connect-mode highlight */
-.node.connect-source .node-pill { border-color:#a78bfa; box-shadow:0 0 20px rgba(167,139,250,0.4),0 4px 24px rgba(0,0,0,0.4); }
-.node.connect-target-hover .node-pill { border-color:#34d399; box-shadow:0 0 20px rgba(52,211,153,0.4),0 4px 24px rgba(0,0,0,0.4); }
+.node.connect-source .node-pill { border-color:#a78bfa; box-shadow:0 0 25px rgba(167,139,250,0.45); }
+.node.connect-target-hover .node-pill { border-color:#34d399; box-shadow:0 0 25px rgba(52,211,153,0.45); }
 
-/* ── Glass buttons ── */
+/* ── Apple Glass Buttons ── */
 .glass-btn {
-  backdrop-filter:blur(20px) saturate(180%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(25px) saturate(190%);
+  -webkit-backdrop-filter:blur(25px) saturate(190%);
   background:var(--glass-bg); border:1px solid var(--glass-border);
   border-radius:999px; color:var(--text-primary);
   font-family:inherit; font-size:13px; font-weight:500;
-  padding:10px 20px; cursor:pointer;
-  transition:all 0.2s ease;
+  padding:10px 18px; cursor:pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display:inline-flex; align-items:center; gap:8px;
-  position:relative; overflow:hidden; white-space:nowrap;
-  box-shadow:0 4px 16px rgba(0,0,0,0.3),0 1px 0 rgba(255,255,255,0.08) inset;
-  -webkit-tap-highlight-color:transparent;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.05) inset;
 }
-.glass-btn::before {
-  content:''; position:absolute; inset:0; border-radius:inherit;
-  background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 60%);
-  pointer-events:none;
+.glass-btn:hover {
+  background:var(--glass-hover); border-color:rgba(255,255,255,0.25);
+  transform:translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.3);
 }
-.glass-btn:hover { background:var(--glass-hover); border-color:rgba(255,255,255,0.28); transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,0.4),0 1px 0 rgba(255,255,255,0.12) inset; }
-.glass-btn:active { background:var(--glass-active); transform:translateY(0) scale(0.98); }
-.glass-btn.primary { background:rgba(59,130,246,0.25); border-color:rgba(59,130,246,0.5); color:#93c5fd; box-shadow:0 0 20px rgba(59,130,246,0.15),0 4px 16px rgba(0,0,0,0.3),0 1px 0 rgba(255,255,255,0.08) inset; }
-.glass-btn.primary:hover { background:rgba(59,130,246,0.35); border-color:rgba(59,130,246,0.7); box-shadow:0 0 30px rgba(59,130,246,0.25),0 8px 24px rgba(0,0,0,0.4); }
-.glass-btn.violet { background:rgba(167,139,250,0.2); border-color:rgba(167,139,250,0.45); color:#c4b5fd; }
-.glass-btn.violet:hover { background:rgba(167,139,250,0.3); border-color:rgba(167,139,250,0.65); }
-.glass-btn.violet.active { background:rgba(167,139,250,0.35); border-color:#a78bfa; box-shadow:0 0 20px rgba(167,139,250,0.3),0 4px 16px rgba(0,0,0,0.3); }
-.glass-btn.danger { background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.3); color:#fca5a5; }
-.glass-btn.danger:hover { background:rgba(239,68,68,0.25); border-color:rgba(239,68,68,0.5); }
+.glass-btn:active { transform:translateY(0) scale(0.97); }
+.glass-btn.primary { background:rgba(59,130,246,0.18); border-color:rgba(59,130,246,0.35); color:#93c5fd; }
+.glass-btn.primary:hover { background:rgba(59,130,246,0.28); border-color:rgba(59,130,246,0.5); }
+.glass-btn.violet { background:rgba(167,139,250,0.15); border-color:rgba(167,139,250,0.35); color:#c4b5fd; }
+.glass-btn.violet.active { background:rgba(167,139,250,0.3); border-color:#a78bfa; }
+.glass-btn.danger { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.25); color:#fca5a5; }
+.glass-btn.danger:hover { background:rgba(239,68,68,0.22); border-color:rgba(239,68,68,0.45); }
 
-/* ── Toolbar ── */
+/* ── Toolbar (Responsive) ── */
 #toolbar {
   position:fixed; top:24px; left:50%; transform:translateX(-50%);
-  z-index:50; display:flex; align-items:center; gap:10px;
-  backdrop-filter:blur(30px) saturate(200%);
-  -webkit-backdrop-filter:blur(30px) saturate(200%);
-  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
-  border-radius:999px; padding:8px 12px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.4),0 1px 0 rgba(255,255,255,0.08) inset;
+  z-index:50; display:flex; align-items:center; gap:8px;
+  backdrop-filter:blur(35px) saturate(210%);
+  -webkit-backdrop-filter:blur(35px) saturate(210%);
+  background:rgba(15, 22, 42, 0.45); border:1px solid rgba(255,255,255,0.08);
+  border-radius:999px; padding:6px 10px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.05) inset;
+  max-width: 95vw; overflow-x: auto; white-space: nowrap;
 }
-#toolbar-title { font-size:13px; font-weight:500; color:var(--text-secondary); padding:0 8px; }
-#toolbar .sep { width:1px; height:20px; background:rgba(255,255,255,0.12); margin:0 2px; }
+#toolbar::-webkit-scrollbar { display: none; }
+#toolbar-title { font-size:13px; font-weight:600; color:var(--text-primary); padding:0 8px; letter-spacing: 0.03em; }
+#toolbar .sep { width:1px; height:22px; background:rgba(255,255,255,0.1); margin:0 4px; }
 
-/* connect mode banner */
 #connect-banner {
   position:fixed; top:90px; left:50%; transform:translateX(-50%);
-  z-index:50; display:none;
-  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  background:rgba(167,139,250,0.15); border:1px solid rgba(167,139,250,0.4);
-  border-radius:999px; padding:8px 20px;
-  font-size:12.5px; color:#c4b5fd; gap:10px; align-items:center;
-  box-shadow:0 0 30px rgba(167,139,250,0.15);
+  z-index:50; display:none; backdrop-filter:blur(20px); background:rgba(167,139,250,0.12);
+  border:1px solid rgba(167,139,250,0.35); border-radius:999px; padding:8px 20px;
+  font-size:13px; color:#c4b5fd; gap:10px; align-items:center; box-shadow:0 8px 32px rgba(0,0,0,0.3);
 }
 #connect-banner.visible { display:flex; }
+#hint { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:50; font-size:11.5px; color:var(--text-muted); pointer-events:none; text-align:center; width: 90vw; }
 
-#hint { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:50; font-size:11.5px; color:var(--text-muted); letter-spacing:0.02em; pointer-events:none; text-align:center; }
-
-/* ── Card panel ── */
+/* ── Responsive Liquid Card Panel ── */
 #card-panel {
   position:fixed; right:24px; top:50%;
   transform:translateY(-50%) translateX(120%);
-  z-index:100; width:340px; max-height:calc(100vh - 100px);
-  backdrop-filter:blur(40px) saturate(200%);
-  -webkit-backdrop-filter:blur(40px) saturate(200%);
-  background:rgba(8,14,30,0.88);
-  border:1px solid rgba(255,255,255,0.12); border-radius:20px;
-  box-shadow:0 0 60px rgba(30,60,200,0.15),0 24px 64px rgba(0,0,0,0.6),0 1px 0 rgba(255,255,255,0.08) inset;
+  z-index:100; width:360px; max-height:calc(100vh - 80px);
+  backdrop-filter:blur(50px) saturate(220%);
+  -webkit-backdrop-filter:blur(50px) saturate(220%);
+  background:rgba(10, 16, 32, 0.75);
+  border:1px solid rgba(255,255,255,0.1); border-radius:28px;
+  box-shadow:0 24px 70px rgba(0,0,0,0.7), 0 1px 1px rgba(255,255,255,0.1) inset;
   overflow:hidden; display:flex; flex-direction:column;
-  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s ease;
-  opacity:0;
+  transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease; opacity:0;
 }
 #card-panel.open { transform:translateY(-50%) translateX(0); opacity:1; }
 
-.card-header { padding:20px 20px 0; display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.card-title-wrap { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
-#card-color-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; box-shadow:0 0 10px currentColor; }
-#card-title { font-size:17px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.card-close-btn { width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:var(--text-secondary); font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; flex-shrink:0; }
+.card-header { padding:24px 24px 0; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.card-title-wrap { display:flex; align-items:center; gap:12px; flex:1; min-width:0; }
+#card-color-dot { width:13px; height:13px; border-radius:50%; flex-shrink:0; }
+#card-title { font-size:18px; font-weight:600; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.card-close-btn { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:var(--text-secondary); font-size:13px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; }
 .card-close-btn:hover { background:rgba(255,255,255,0.15); color:white; }
 
-.card-body { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:16px; }
-.card-body::-webkit-scrollbar { width:3px; }
-.card-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:3px; }
+.card-body { flex:1; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:20px; }
+.card-body::-webkit-scrollbar { width:4px; }
+.card-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:999px; }
 
-.card-section-label { font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
-.card-divider { height:1px; background:rgba(255,255,255,0.06); margin:0 -20px; }
+.card-section-label { font-size:10.5px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; }
+.card-divider { height:1px; background:rgba(255,255,255,0.06); margin:0 -24px; }
 
-#card-notes { width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:var(--text-primary); font-family:inherit; font-size:13.5px; line-height:1.6; padding:12px 14px; resize:none; min-height:90px; transition:border-color 0.2s; outline:none; }
-#card-notes:focus { border-color:rgba(59,130,246,0.4); background:rgba(255,255,255,0.06); }
-#card-notes::placeholder { color:var(--text-muted); }
+#card-notes { width:100%; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:16px; color:var(--text-primary); font-family:inherit; font-size:14px; line-height:1.6; padding:14px; resize:none; min-height:100px; outline:none; transition:border-color 0.2s; }
+#card-notes:focus { border-color:rgba(59,130,246,0.4); }
 
-/* header photo in card */
-.card-header-photo-wrap { position:relative; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.1); }
-.card-header-photo-wrap img { width:100%; height:110px; object-fit:cover; display:block; }
-.card-header-photo-remove { position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.15); color:white; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; }
-.card-header-photo-remove:hover { background:rgba(239,68,68,0.7); }
+/* Custom RGB Picker Styling */
+.rgb-picker-container { display: flex; align-items: center; gap:12px; background: rgba(255,255,255,0.03); padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05); }
+.rgb-picker-label { font-size: 13px; color: var(--text-secondary); flex:1; }
+.rgb-color-input { -webkit-appearance: none; -moz-appearance: none; appearance: none; background: transparent; border: none; width: 34px; height: 34px; cursor: pointer; border-radius: 50%; overflow: hidden; }
+.rgb-color-input::-webkit-color-swatch { border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-/* linked nodes list */
-.linked-node-item { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:8px 12px; font-size:12.5px; animation:fadeIn 0.2s ease; }
-.linked-node-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.card-header-photo-wrap { position:relative; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.08); }
+.card-header-photo-wrap img { width:100%; height:120px; object-fit:cover; display:block; }
+.card-header-photo-remove { position:absolute; top:8px; right:8px; width:24px; height:24px; border-radius:50%; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.15); color:white; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.card-header-photo-remove:hover { background:rgba(239,68,68,0.8); }
+
+.linked-node-item, .link-item { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:10px 14px; font-size:13px; }
+.linked-node-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
 .linked-node-label { flex:1; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
 .linked-node-label:hover { color:#93c5fd; }
-.linked-node-remove { width:18px; height:18px; border-radius:50%; background:rgba(239,68,68,0.12); border:none; color:#fca5a5; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s; }
-.linked-node-remove:hover { background:rgba(239,68,68,0.25); }
+.linked-node-remove, .link-delete { width:20px; height:20px; border-radius:50%; background:rgba(239,68,68,0.1); border:none; color:#fca5a5; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.linked-node-remove:hover, .link-delete:hover { background:rgba(239,68,68,0.25); }
 
-.link-item { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:8px 12px; font-size:12.5px; animation:fadeIn 0.2s ease; }
-.link-icon { width:22px; height:22px; border-radius:6px; background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:10px; }
-.link-url { flex:1; color:#93c5fd; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; text-decoration:none; }
+.link-url { flex:1; color:#93c5fd; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-decoration:none; }
 .link-url:hover { text-decoration:underline; }
-.link-delete { width:18px; height:18px; border-radius:50%; background:rgba(239,68,68,0.12); border:none; color:#fca5a5; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s; }
-.link-delete:hover { background:rgba(239,68,68,0.25); }
 
-.photos-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.photo-item { position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.08); animation:fadeIn 0.2s ease; cursor:pointer; }
+.photos-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.photo-item { position:relative; aspect-ratio:1; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,0.06); cursor:pointer; }
 .photo-item img { width:100%; height:100%; object-fit:cover; display:block; }
-.photo-delete { position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.15); color:white; font-size:11px; cursor:pointer; display:none; align-items:center; justify-content:center; transition:background 0.2s; }
+.photo-delete { position:absolute; top:8px; right:8px; width:24px; height:24px; border-radius:50%; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.15); color:white; font-size:11px; cursor:pointer; display:none; align-items:center; justify-content:center; }
 .photo-item:hover .photo-delete { display:flex; }
-.photo-delete:hover { background:rgba(239,68,68,0.7); }
+.photo-delete:hover { background:rgba(239,68,68,0.8); }
 
-.color-swatches { display:flex; gap:8px; flex-wrap:wrap; }
-.color-swatch { width:26px; height:26px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all 0.2s; }
-.color-swatch:hover { transform:scale(1.2); }
-.color-swatch.active { border-color:white; box-shadow:0 0 8px currentColor; }
+.color-swatches { display:flex; gap:10px; flex-wrap:wrap; }
+.color-swatch { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:transform 0.2s; }
+.color-swatch:hover { transform:scale(1.15); }
+.color-swatch.active { border-color:white; box-shadow:0 0 10px currentColor; }
 
 /* ── Modals ── */
-.modal-wrap {
-  position:fixed; inset:0; z-index:200;
-  display:flex; align-items:center; justify-content:center;
-  opacity:0; pointer-events:none; transition:opacity 0.2s;
-}
+.modal-wrap { position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; }
 .modal-wrap.open { opacity:1; pointer-events:all; }
-.modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+.modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
 .modal-box {
-  position:relative; z-index:1; width:380px;
-  background:rgba(8,14,30,0.95);
-  border:1px solid rgba(255,255,255,0.14); border-radius:20px; padding:24px;
-  box-shadow:0 0 60px rgba(30,60,200,0.2),0 32px 80px rgba(0,0,0,0.7);
-  animation:modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative; z-index:1; width:390px; max-width:90vw; background:rgba(10, 16, 32, 0.9);
+  border:1px solid rgba(255,255,255,0.12); border-radius:28px; padding:24px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.6); animation:modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes modalIn { from{transform:scale(0.9) translateY(10px);opacity:0} }
-.modal-title { font-size:16px; font-weight:600; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
-.modal-tabs { display:flex; gap:6px; margin-bottom:18px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:4px; }
-.modal-tab { flex:1; padding:8px; border-radius:9px; background:transparent; border:none; color:var(--text-secondary); font-family:inherit; font-size:12.5px; font-weight:500; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px; }
-.modal-tab.active { background:rgba(255,255,255,0.1); color:var(--text-primary); box-shadow:0 1px 0 rgba(255,255,255,0.06) inset; }
-.modal-tab:hover:not(.active) { background:rgba(255,255,255,0.05); color:var(--text-primary); }
-.modal-pane { display:none; }
-.modal-pane.active { display:block; }
+@keyframes modalIn { from{transform:scale(0.95) translateY(10px);opacity:0} }
+.modal-title { font-size:17px; font-weight:600; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
 
-.glass-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:var(--text-primary); font-family:inherit; font-size:13.5px; padding:11px 14px; outline:none; transition:border-color 0.2s,background 0.2s; margin-bottom:10px; }
-.glass-input:focus { border-color:rgba(59,130,246,0.5); background:rgba(255,255,255,0.08); }
-.glass-input::placeholder { color:var(--text-muted); }
+.glass-input { width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; color:var(--text-primary); font-family:inherit; font-size:14px; padding:12px 16px; outline:none; transition:border-color 0.2s; margin-bottom:12px; }
+.glass-input:focus { border-color:rgba(59,130,246,0.4); }
 
-.photo-drop { border:1.5px dashed rgba(255,255,255,0.15); border-radius:14px; padding:28px; text-align:center; cursor:pointer; transition:all 0.2s; margin-bottom:10px; }
-.photo-drop:hover,.photo-drop.drag-over { border-color:rgba(59,130,246,0.5); background:rgba(59,130,246,0.05); }
-.photo-drop-icon { font-size:28px; margin-bottom:8px; color:var(--text-muted); }
-.photo-drop-text { font-size:12.5px; color:var(--text-secondary); }
-.photo-drop-sub { font-size:11px; color:var(--text-muted); margin-top:4px; }
+.modal-tabs { display:flex; gap:6px; margin-bottom:18px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:4px; }
+.modal-tab { flex:1; padding:10px; border-radius:10px; background:transparent; border:none; color:var(--text-secondary); font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+.modal-tab.active { background:rgba(255,255,255,0.08); color:var(--text-primary); }
 
-/* photo placement choice */
+.photo-drop { border:1.5px dashed rgba(255,255,255,0.15); border-radius:18px; padding:32px; text-align:center; cursor:pointer; margin-bottom:12px; }
+.photo-drop:hover, .photo-drop.drag-over { border-color:rgba(59,130,246,0.5); background:rgba(59,130,246,0.03); }
+.photo-drop-icon { font-size:30px; margin-bottom:8px; color:var(--text-muted); }
+.photo-drop-text { font-size:13px; color:var(--text-secondary); }
+
 .placement-choice { display:flex; gap:8px; margin-top:10px; margin-bottom:4px; }
-.placement-btn { flex:1; padding:10px 8px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:var(--text-secondary); font-family:inherit; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s; display:flex; flex-direction:column; align-items:center; gap:6px; }
-.placement-btn:hover { background:rgba(255,255,255,0.08); color:var(--text-primary); }
-.placement-btn.active { background:rgba(59,130,246,0.2); border-color:rgba(59,130,246,0.5); color:#93c5fd; }
-.placement-btn svg { opacity:0.7; }
+.placement-btn { flex:1; padding:12px 8px; border-radius:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); color:var(--text-secondary); font-family:inherit; font-size:12px; font-weight:500; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; }
+.placement-btn.active { background:rgba(59,130,246,0.15); border-color:rgba(59,130,246,0.4); color:#93c5fd; }
 
-/* connect-node picker in modal */
-.node-picker-list { display:flex; flex-direction:column; gap:6px; max-height:260px; overflow-y:auto; margin-bottom:14px; }
-.node-picker-list::-webkit-scrollbar { width:3px; }
-.node-picker-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:3px; }
-.node-picker-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); cursor:pointer; transition:all 0.2s; font-size:13px; }
-.node-picker-item:hover { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.18); }
-.node-picker-item.selected { background:rgba(59,130,246,0.15); border-color:rgba(59,130,246,0.4); }
+.node-picker-list { display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; margin-bottom:16px; }
+.node-picker-item { display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); cursor:pointer; font-size:13.5px; }
+.node-picker-item.selected { background:rgba(59,130,246,0.12); border-color:rgba(59,130,246,0.35); }
 
-/* lightbox */
-#lightbox { position:fixed; inset:0; z-index:300; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; backdrop-filter:blur(10px); }
+#lightbox { position:fixed; inset:0; z-index:300; background:rgba(2,4,10,0.9); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; backdrop-filter:blur(15px); }
 #lightbox.open { opacity:1; pointer-events:all; }
-#lightbox img { max-width:90vw; max-height:90vh; border-radius:12px; object-fit:contain; }
+#lightbox img { max-width:92vw; max-height:92vh; border-radius:16px; object-fit:contain; }
 
-/* live connect wire */
 #live-wire { position:fixed; inset:0; z-index:4; pointer-events:none; overflow:visible; }
 
-@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+/* Background Glow Picker Popover Style */
+.bg-picker-wrap { display: flex; align-items: center; gap: 6px; }
+
+/* Responsive Media Queries (Mobile layout overrides) */
+@media (max-width: 768px) {
+  #toolbar { top: 12px; padding: 4px 8px; gap: 4px; }
+  #toolbar-title { display: none; }
+  .glass-btn { padding: 8px 12px; font-size: 12px; }
+  #card-panel {
+    right: 0; bottom: 0; top: auto; width: 100vw; max-height: 65vh;
+    border-radius: 28px 28px 0 0; transform: translateY(120%) translateX(0);
+  }
+  #card-panel.open { transform: translateY(0) translateX(0); }
+  #hint { bottom: auto; top: 80px; font-size: 10.5px; }
+  #connect-banner { top: 75px; width: 90vw; justify-content: space-between; padding: 6px 14px; }
+}
 </style>
 </head>
 <body>
@@ -303,7 +275,6 @@ svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:vi
 <svg id="live-wire" xmlns="http://www.w3.org/2000/svg"></svg>
 <div id="canvas"></div>
 
-<!-- Toolbar -->
 <div id="toolbar">
   <span id="toolbar-title">✦ MindMap</span>
   <div class="sep"></div>
@@ -323,10 +294,14 @@ svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:vi
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7" r="2" fill="currentColor"/></svg>
     Center
   </button>
+  <div class="sep"></div>
+  <div class="bg-picker-wrap" title="Change Background Glow Color">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    <input type="color" id="bg-glow-picker" class="rgb-color-input" style="width:24px; height:24px;" onchange="handleBgGlowChange(event)">
+  </div>
   <span id="save-indicator" style="font-size:11px;color:var(--text-muted);padding:0 6px;transition:opacity 0.6s;opacity:0;pointer-events:none;">✓ Saved</span>
 </div>
 
-<!-- Connect banner -->
 <div id="connect-banner">
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="2.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="1.5 1.5"/></svg>
   <span id="connect-banner-text">Click a node to start a connection</span>
@@ -335,7 +310,6 @@ svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:vi
 
 <div id="hint">Drag to pan &nbsp;·&nbsp; Drag nodes to reposition &nbsp;·&nbsp; Click to open card &nbsp;·&nbsp; Use Connect to link nodes</div>
 
-<!-- Card Panel -->
 <div id="card-panel">
   <div class="card-header">
     <div class="card-title-wrap">
@@ -345,7 +319,6 @@ svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:vi
     <button class="card-close-btn" onclick="closeCard()">✕</button>
   </div>
   <div class="card-body">
-    <!-- Header photo -->
     <div id="header-photo-section">
       <div class="card-section-label">Header Photo</div>
       <div id="header-photo-display"></div>
@@ -356,33 +329,31 @@ svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:vi
       <input type="file" id="header-photo-input" accept="image/*" style="display:none" onchange="handleHeaderPhotoUpload(event)">
     </div>
     <div class="card-divider"></div>
-    <!-- Color -->
     <div>
-      <div class="card-section-label">Color</div>
-      <div class="color-swatches" id="color-swatches"></div>
+      <div class="card-section-label">Color Presets</div>
+      <div class="color-swatches" id="color-swatches" style="margin-bottom:12px;"></div>
+      <div class="rgb-picker-container">
+        <span class="rgb-picker-label">Custom RGB Color</span>
+        <input type="color" id="node-custom-color-picker" class="rgb-color-input" onchange="handleCustomColorChange(event)">
+      </div>
     </div>
     <div class="card-divider"></div>
-    <!-- Notes (hidden for photo-only nodes) -->
     <div id="notes-section">
       <div class="card-section-label">Notes</div>
       <textarea id="card-notes" placeholder="Add notes…" rows="4" oninput="saveNotes()"></textarea>
     </div>
-    <!-- Linked nodes -->
     <div id="linked-nodes-section" style="display:none">
       <div class="card-section-label">Linked Nodes</div>
       <div id="linked-nodes-list"></div>
     </div>
-    <!-- Links -->
     <div id="links-section" style="display:none">
       <div class="card-section-label">Links</div>
       <div id="links-list"></div>
     </div>
-    <!-- Photos -->
     <div id="photos-section" style="display:none">
       <div class="card-section-label">Photos</div>
       <div class="photos-grid" id="photos-grid"></div>
     </div>
-    <!-- Actions -->
     <button class="glass-btn violet" style="width:100%;justify-content:center;" onclick="startConnectFromCard()">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="2.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="1.5 1.5"/></svg>
       Link to Another Node
@@ -398,7 +369,6 @@ svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:vi
   </div>
 </div>
 
-<!-- Add Node Modal -->
 <div class="modal-wrap" id="add-node-modal">
   <div class="modal-backdrop" onclick="closeAddNodeModal()"></div>
   <div class="modal-box">
@@ -417,7 +387,6 @@ svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:vi
   </div>
 </div>
 
-<!-- Edit Name Modal -->
 <div class="modal-wrap" id="edit-name-modal">
   <div class="modal-backdrop" onclick="closeEditNameModal()"></div>
   <div class="modal-box">
@@ -433,7 +402,6 @@ svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:vi
   </div>
 </div>
 
-<!-- Add Media Modal -->
 <div class="modal-wrap" id="add-media-modal">
   <div class="modal-backdrop" onclick="closeAddMediaModal()"></div>
   <div class="modal-box">
@@ -468,7 +436,6 @@ svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:vi
         <div class="photo-drop-sub">PNG, JPG, GIF, WebP · multiple files ok</div>
       </div>
       <input type="file" id="photo-file-input" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(event)">
-      <!-- placement choice -->
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Where to place the photo?</div>
       <div class="placement-choice">
         <button class="placement-btn active" id="place-gallery" onclick="setPlacement('gallery',this)">
@@ -487,7 +454,6 @@ svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:vi
   </div>
 </div>
 
-<!-- Lightbox -->
 <div id="lightbox" onclick="closeLightbox()">
   <img id="lightbox-img" src="" alt="Photo">
 </div>
@@ -495,8 +461,9 @@ svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:vi
 <script>
 // ── State ──────────────────────────────────────────────────────────────
 let centerName = 'Your Name';
+let bgGlowColor = 'rgba(15, 50, 180, 0.4)';
 let nodes = [];
-let edges = []; // {id, from:'center'|nodeId, to:nodeId}
+let edges = [];
 let panX = 0, panY = 0;
 let activeNodeId = null;
 let isPanning = false, panStart = {x:0,y:0};
@@ -510,7 +477,12 @@ const NODE_COLORS = [
   {id:'emerald',color:'#34d399'},{id:'cyan',  color:'#22d3ee'},
   {id:'pink',   color:'#f472b6'},{id:'white', color:'#e2e8f0'},
 ];
-function getColor(id){ return (NODE_COLORS.find(c=>c.id===id)||NODE_COLORS[0]).color; }
+function getColor(colorValue){
+  if(!colorValue) return NODE_COLORS[0].color;
+  // If it's a hexadecimal color code from the RGB picker, return it directly
+  if(colorValue.startsWith('#')) return colorValue;
+  return (NODE_COLORS.find(c=>c.id===colorValue)||NODE_COLORS[0]).color;
+}
 
 // ── Stars ──────────────────────────────────────────────────────────────
 function createStars(){
@@ -537,7 +509,6 @@ function getNodePos(id){
   return n?{x:n.x,y:n.y}:{x:0,y:0};
 }
 
-// edges helpers
 function getEdgesForNode(id){ return edges.filter(e=>e.from===id||e.to===id); }
 function edgeExists(a,b){ return edges.some(e=>(e.from===a&&e.to===b)||(e.from===b&&e.to===a)); }
 function removeEdge(id){ edges=edges.filter(e=>e.id!==id); }
@@ -551,12 +522,12 @@ function renderLines(){
     const fromNode=edge.from==='center'?null:nodes.find(n=>n.id===edge.from);
     const toNode=nodes.find(n=>n.id===edge.to);
     const isActive=(activeNodeId===edge.from||activeNodeId===edge.to);
-    const color=isActive?(getColor(fromNode?.color||toNode?.color||'blue')):'rgba(255,255,255,0.07)';
+    const color=isActive?(getColor(fromNode?.color||toNode?.color||'blue')):'rgba(255,255,255,0.06)';
     const dx=b.x-a.x,dy=b.y-a.y;
     const path=document.createElementNS('http://www.w3.org/2000/svg','path');
     path.setAttribute('d',`M${a.x},${a.y} C${a.x+dx*0.5},${a.y+dy*0.1} ${a.x+dx*0.5},${b.y-dy*0.1} ${b.x},${b.y}`);
-    path.setAttribute('stroke',isActive?color+'88':color);
-    path.setAttribute('stroke-width',isActive?'2':'1.5');
+    path.setAttribute('stroke',isActive?color+'cc':color);
+    path.setAttribute('stroke-width',isActive?'2.5':'1.5');
     path.setAttribute('fill','none');
     svgLines.appendChild(path);
   });
@@ -564,7 +535,6 @@ function renderLines(){
 
 function renderNodes(){
   canvas.innerHTML='';
-  // center
   const cp=w2s(0,0);
   const ce=document.createElement('div');
   ce.className='node node-center';
@@ -591,18 +561,16 @@ function renderNodes(){
     let inner='<div class="node-inner">';
 
     if(isPhotoOnly){
-      // photo bubble — show first photo or placeholder
       const src=node.photos&&node.photos.length?node.photos[0]:'';
-      inner+=`<div class="node-photo-bubble" style="${isActive?'box-shadow:0 0 20px '+color+'44,0 4px 24px rgba(0,0,0,0.5);border-color:'+color+'66;':''}">`;
+      inner+=`<div class="node-photo-bubble" style="${isActive?'box-shadow:0 0 25px '+color+'66, 0 12px 40px rgba(0,0,0,0.5);border-color:'+color+';':''}">`;
       if(src) inner+=`<img src="${src}" alt="">`;
       else inner+=`<div style="width:120px;height:120px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.04);color:var(--text-muted);font-size:11px;">No photo</div>`;
       inner+=`</div>`;
     } else {
-      // header photo?
       if(node.headerPhoto){
         inner+=`<div class="node-header-photo"><img src="${node.headerPhoto}" alt=""></div>`;
       }
-      inner+=`<div class="node-pill" style="${isActive?'border-color:'+color+'66;box-shadow:0 0 20px '+color+'22,0 4px 24px rgba(0,0,0,0.4);':''}${node.headerPhoto?'border-radius:0 0 999px 999px;border-top:none;':''}">
+      inner+=`<div class="node-pill" style="${isActive?'border-color:'+color+';box-shadow:0 0 25px '+color+'33,0 12px 40px rgba(0,0,0,0.5);':''}${node.headerPhoto?'border-radius:0 0 24px 24px;border-top:none;':''}">
         <div class="node-dot" style="background:${color};color:${color};"></div>
         ${esc(node.title)}
       </div>`;
@@ -616,7 +584,6 @@ function renderNodes(){
     if(connectMode){
       el.addEventListener('click',e=>{e.stopPropagation();handleConnectClick(node.id);});
       if(connectSource&&connectSource!==node.id) el.classList.add('connect-target-hover');
-      if(connectSource===node.id) el.classList.add('connect-source');
     } else {
       el.addEventListener('click',e=>{e.stopPropagation();openCard(node.id);});
     }
@@ -644,7 +611,7 @@ window.addEventListener('mousemove',e=>{
     const path=document.createElementNS('http://www.w3.org/2000/svg','path');
     const dx=e.clientX-src.x,dy=e.clientY-src.y;
     path.setAttribute('d',`M${src.x},${src.y} C${src.x+dx*0.5},${src.y} ${src.x+dx*0.5},${e.clientY} ${e.clientX},${e.clientY}`);
-    path.setAttribute('stroke','rgba(167,139,250,0.5)'); path.setAttribute('stroke-width','1.5'); path.setAttribute('fill','none');
+    path.setAttribute('stroke','rgba(167,139,250,0.6)'); path.setAttribute('stroke-width','2'); path.setAttribute('fill','none');
     path.setAttribute('stroke-dasharray','6 4');
     liveWire.appendChild(path);
   }
@@ -687,9 +654,7 @@ function resetView(){ panX=0;panY=0;renderNodes(); }
 
 // ── Connect mode ───────────────────────────────────────────────────────
 function toggleConnectMode(){
-  connectMode=!connectMode;
-  connectSource=null;
-  liveWire.innerHTML='';
+  connectMode=!connectMode; connectSource=null; liveWire.innerHTML='';
   document.getElementById('connect-btn').classList.toggle('active',connectMode);
   document.getElementById('connect-banner').classList.toggle('visible',connectMode);
   document.getElementById('connect-banner-text').textContent='Click a node to start a connection';
@@ -698,10 +663,7 @@ function toggleConnectMode(){
 }
 function cancelConnect(){ connectMode=false; connectSource=null; liveWire.innerHTML=''; document.getElementById('connect-btn').classList.remove('active'); document.getElementById('connect-banner').classList.remove('visible'); renderNodes(); }
 function startConnectFromCard(){
-  const src=activeNodeId;
-  closeCard();
-  connectMode=true;
-  connectSource=src;
+  const src=activeNodeId; closeCard(); connectMode=true; connectSource=src;
   document.getElementById('connect-btn').classList.add('active');
   document.getElementById('connect-banner').classList.add('visible');
   document.getElementById('connect-banner-text').textContent='Now click the target node to connect';
@@ -709,8 +671,7 @@ function startConnectFromCard(){
 }
 function handleConnectClick(id){
   if(!connectSource){
-    connectSource=id;
-    document.getElementById('connect-banner-text').textContent='Now click the target node to connect';
+    connectSource=id; document.getElementById('connect-banner-text').textContent='Now click the target node to connect';
     renderNodes(); return;
   }
   if(id===connectSource){ connectSource=null; liveWire.innerHTML=''; renderNodes(); return; }
@@ -726,7 +687,6 @@ function openAddNodeModal(){
   selectedParent='center';
   const list=document.getElementById('add-node-parent-list');
   list.innerHTML='';
-  // center option
   const ci=document.createElement('div');
   ci.className='node-picker-item selected';
   ci.dataset.id='center';
@@ -762,17 +722,13 @@ function addNode(){
     color:'blue', notes:'', links:[], photos:[], headerPhoto:null
   });
   edges.push({id:'e'+Date.now(),from:parentId,to:id});
-  closeAddNodeModal();
-  renderNodes();
-  openCard(id);
+  closeAddNodeModal(); renderNodes(); openCard(id);
 }
 
 // ── Edit Name ──────────────────────────────────────────────────────────
 function openEditNameModal(){
-  const el=document.getElementById('edit-name-modal');
-  el.classList.add('open');
-  const inp=document.getElementById('edit-name-input');
-  inp.value=centerName;
+  document.getElementById('edit-name-modal').classList.add('open');
+  const inp=document.getElementById('edit-name-input'); inp.value=centerName;
   setTimeout(()=>inp.focus(),100);
 }
 function closeEditNameModal(){ document.getElementById('edit-name-modal').classList.remove('open'); }
@@ -780,6 +736,29 @@ function saveEditName(){
   const v=document.getElementById('edit-name-input').value.trim();
   if(v){centerName=v;renderNodes();}
   closeEditNameModal();
+}
+
+// ── Background Glow Picker Handler ──
+function handleBgGlowChange(e) {
+  const hex = e.target.value;
+  // Convert HEX to RGBA with 0.4 opacity for a nice liquid background effect
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  bgGlowColor = `rgba(${r}, ${g}, ${b}, 0.45)`;
+  document.documentElement.style.setProperty('--bg-glow-color', bgGlowColor);
+  saveState();
+}
+
+// ── Custom RGB Node Color Picker Handler ──
+function handleCustomColorChange(e) {
+  if (!activeNodeId) return;
+  const node = nodes.find(n => n.id === activeNodeId);
+  if (node) {
+    node.color = e.target.value; // set HEX string directly
+    openCard(node.id);
+    renderNodes();
+  }
 }
 
 // ── Card ───────────────────────────────────────────────────────────────
@@ -793,14 +772,19 @@ function openCard(id){
   const dot=document.getElementById('card-color-dot');
   dot.style.background=color; dot.style.color=color;
   document.getElementById('card-notes').value=node.notes||'';
-  // show/hide notes for photo-only
   document.getElementById('notes-section').style.display=node.photoOnly?'none':'block';
   document.getElementById('header-photo-section').style.display=node.photoOnly?'none':'block';
-  renderHeaderPhoto(node);
-  renderCardLinks(node);
-  renderCardPhotos(node);
-  renderLinkedNodes(node);
-  renderColorSwatches(node);
+
+  // Set the value of custom color input to node's color if it's hex, else default it
+  const pickerInput = document.getElementById('node-custom-color-picker');
+  if(node.color && node.color.startsWith('#')) {
+    pickerInput.value = node.color;
+  } else {
+    pickerInput.value = color; // fallback to the resolved preset color
+  }
+
+  renderHeaderPhoto(node); renderCardLinks(node); renderCardPhotos(node);
+  renderLinkedNodes(node); renderColorSwatches(node);
   document.getElementById('card-panel').classList.add('open');
 }
 function closeCard(){ activeNodeId=null; document.getElementById('card-panel').classList.remove('open'); renderNodes(); }
@@ -808,8 +792,7 @@ function saveNotes(){ if(!activeNodeId) return; const n=nodes.find(n=>n.id===act
 
 // ── Header photo ───────────────────────────────────────────────────────
 function renderHeaderPhoto(node){
-  const wrap=document.getElementById('header-photo-display');
-  wrap.innerHTML='';
+  const wrap=document.getElementById('header-photo-display'); wrap.innerHTML='';
   if(node.headerPhoto){
     wrap.innerHTML=`<div class="card-header-photo-wrap" style="margin-bottom:8px;"><img src="${node.headerPhoto}" alt=""><button class="card-header-photo-remove" onclick="removeHeaderPhoto()" title="Remove">✕</button></div>`;
     document.getElementById('add-header-photo-btn').textContent='Change Header Photo';
@@ -822,16 +805,14 @@ function handleHeaderPhotoUpload(e){
   const file=e.target.files[0]; if(!file) return;
   const reader=new FileReader();
   reader.onload=ev=>{ const n=nodes.find(n=>n.id===activeNodeId); if(!n) return; n.headerPhoto=ev.target.result; renderHeaderPhoto(n); renderNodes(); };
-  reader.readAsDataURL(file);
-  e.target.value='';
+  reader.readAsDataURL(file); e.target.value='';
 }
 function removeHeaderPhoto(){ const n=nodes.find(n=>n.id===activeNodeId); if(!n) return; n.headerPhoto=null; renderHeaderPhoto(n); renderNodes(); }
 
 // ── Linked nodes ───────────────────────────────────────────────────────
 function renderLinkedNodes(node){
   const section=document.getElementById('linked-nodes-section');
-  const list=document.getElementById('linked-nodes-list');
-  list.innerHTML='';
+  const list=document.getElementById('linked-nodes-list'); list.innerHTML='';
   const nodeEdges=getEdgesForNode(node.id);
   if(!nodeEdges.length){ section.style.display='none'; return; }
   section.style.display='block';
@@ -925,7 +906,6 @@ function handlePhotoUpload(e){
     reader.onload=ev=>{
       const src=ev.target.result;
       if(photoPlacement==='new-node'){
-        // create new photo-only node connected to current
         const parentNode=nodes.find(n=>n.id===activeNodeId);
         const parentPos=parentNode?{x:parentNode.x,y:parentNode.y}:{x:0,y:0};
         const angle=Math.random()*Math.PI*2;
@@ -952,7 +932,6 @@ function handleDrop(e){
   e.preventDefault(); document.getElementById('photo-drop').classList.remove('drag-over');
   const files=e.dataTransfer.files; if(!files.length) return;
   const fakeEvent={target:{files:Array.from(files).filter(f=>f.type.startsWith('image/'))}};
-  // reuse handler
   Array.from(fakeEvent.target.files).forEach(file=>{
     const reader=new FileReader();
     reader.onload=ev=>{
@@ -982,10 +961,9 @@ const STORAGE_KEY = 'mindmap_v1';
 
 function saveState() {
   try {
-    const state = { centerName, nodes, edges, panX, panY };
+    const state = { centerName, bgGlowColor, nodes, edges, panX, panY };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch(e) {
-    // localStorage full (photos are large base64) — silently ignore
     console.warn('MindMap: could not save to localStorage', e);
   }
 }
@@ -996,28 +974,36 @@ function loadState() {
     if (!raw) return false;
     const state = JSON.parse(raw);
     centerName = state.centerName || 'Your Name';
+    bgGlowColor = state.bgGlowColor || 'rgba(15, 50, 180, 0.4)';
     nodes = state.nodes || [];
     edges = state.edges || [];
     panX = state.panX || 0;
     panY = state.panY || 0;
+    
+    // Set loaded glow background
+    document.documentElement.style.setProperty('--bg-glow-color', bgGlowColor);
+    // Sync the background color picker tool input value
+    if (bgGlowColor.startsWith('rgba')) {
+      const rgbValues = bgGlowColor.match(/\d+/g);
+      if(rgbValues && rgbValues.length >= 3) {
+        const hex = "#" + ((1 << 24) + (parseInt(rgbValues[0]) << 16) + (parseInt(rgbValues[1]) << 8) + parseInt(rgbValues[2])).toString(16).slice(1);
+        document.getElementById('bg-glow-picker').value = hex;
+      }
+    }
     return true;
   } catch(e) {
     return false;
   }
 }
 
-// Patch every state-mutating function to auto-save after changes.
-// We do this by wrapping the render call — any render = state changed.
 const _renderNodes = renderNodes;
 let _saveTimer = null;
 renderNodes = function() {
   _renderNodes();
   clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(saveState, 400); // debounce 400ms
+  _saveTimer = setTimeout(saveState, 400);
 };
 
-// Also save notes immediately on input (textarea oninput already calls saveNotes,
-// but we need to persist to localStorage too)
 const _saveNotes = saveNotes;
 saveNotes = function() {
   _saveNotes();
@@ -1030,7 +1016,6 @@ createStars();
 
 const loaded = loadState();
 if (!loaded) {
-  // First-time defaults
   nodes=[
     {id:'n1',title:'Projects',photoOnly:false,x:-220,y:-130,color:'blue',notes:'All ongoing projects and ideas',links:[],photos:[],headerPhoto:null},
     {id:'n2',title:'Goals',photoOnly:false,x:160,y:-190,color:'emerald',notes:'Short and long term goals',links:[],photos:[],headerPhoto:null},
@@ -1043,6 +1028,8 @@ if (!loaded) {
     {id:'e3',from:'center',to:'n3'},{id:'e4',from:'center',to:'n4'},
     {id:'e5',from:'center',to:'n5'},
   ];
+  document.documentElement.style.setProperty('--bg-glow-color', bgGlowColor);
+  document.getElementById('bg-glow-picker').value = "#0f32b4";
 }
 
 renderNodes();
