@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindMap</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --glass-bg: rgba(255,255,255,0.07);
+  --glass-border: rgba(255,255,255,0.15);
+  --glass-hover: rgba(255,255,255,0.12);
+  --glass-active: rgba(255,255,255,0.18);
+  --text-primary: rgba(255,255,255,0.95);
+  --text-secondary: rgba(255,255,255,0.6);
+  --text-muted: rgba(255,255,255,0.35);
+}
+body {
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#050810;
+  color:var(--text-primary);
+  height:100vh; overflow:hidden;
+  position:relative; cursor:default; user-select:none;
+}
+body::before {
+  content:''; position:fixed; bottom:-100px; left:50%; transform:translateX(-50%);
+  width:140vw; height:70vh;
+  background:radial-gradient(ellipse at center bottom,rgba(15,50,180,0.45) 0%,rgba(10,25,100,0.25) 40%,transparent 70%);
+  pointer-events:none; z-index:0;
+}
+body::after {
+  content:''; position:fixed; bottom:-50px; left:50%; transform:translateX(-50%);
+  width:80vw; height:40vh;
+  background:radial-gradient(ellipse at center bottom,rgba(30,80,255,0.2) 0%,transparent 60%);
+  pointer-events:none; z-index:0;
+}
+.stars { position:fixed; inset:0; z-index:0; pointer-events:none; }
+.star { position:absolute; background:white; border-radius:50%; animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s); opacity:0; }
+@keyframes twinkle { 0%,100%{opacity:0} 50%{opacity:var(--max-op,0.6)} }
+
+#canvas { position:fixed; inset:0; z-index:1; cursor:grab; }
+#canvas:active { cursor:grabbing; }
+svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:visible; }
+
+/* ── Nodes ── */
+.node {
+  position:absolute; z-index:3; transform:translate(-50%,-50%);
+  cursor:pointer;
+}
+.node-inner {
+  display:flex; flex-direction:column; align-items:center; gap:0;
+}
+
+/* header photo strip */
+.node-header-photo {
+  width:100%; max-width:160px; border-radius:14px 14px 0 0; overflow:hidden;
+  border:1px solid rgba(255,255,255,0.12); border-bottom:none;
+  backdrop-filter:blur(10px);
+}
+.node-header-photo img { width:100%; height:90px; object-fit:cover; display:block; }
+
+.node-pill {
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:999px;
+  padding:10px 20px;
+  font-size:13px; font-weight:500; letter-spacing:0.01em;
+  color:var(--text-primary); white-space:nowrap;
+  box-shadow:0 4px 24px rgba(0,0,0,0.35),0 1px 0 rgba(255,255,255,0.08) inset;
+  transition:all 0.2s ease;
+  display:flex; align-items:center; gap:8px;
+  position:relative; overflow:hidden;
+}
+.node-pill::before {
+  content:''; position:absolute; inset:0; border-radius:inherit;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 50%);
+  pointer-events:none;
+}
+/* when header photo exists, square off the top */
+.has-header-photo .node-pill {
+  border-radius:0 0 999px 999px;
+  border-top:none;
+}
+
+/* photo-only node */
+.node-photo-only .node-pill { display:none; }
+.node-photo-only .node-photo-bubble {
+  border-radius:14px; overflow:hidden;
+  border:1px solid rgba(255,255,255,0.15);
+  box-shadow:0 4px 24px rgba(0,0,0,0.5);
+  backdrop-filter:blur(10px);
+}
+.node-photo-bubble img { width:120px; height:120px; object-fit:cover; display:block; }
+
+.node:hover .node-pill {
+  background:var(--glass-hover); border-color:rgba(255,255,255,0.28);
+  box-shadow:0 0 20px rgba(255,255,255,0.06),0 8px 32px rgba(0,0,0,0.4);
+}
+.node-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 8px currentColor; }
+
+/* center node */
+.node-center .node-pill {
+  padding:16px 32px; font-size:18px; font-weight:600;
+  border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.1);
+  box-shadow:0 0 60px rgba(100,150,255,0.15),0 8px 40px rgba(0,0,0,0.5),0 1px 0 rgba(255,255,255,0.12) inset;
+  letter-spacing:0.02em;
+}
+
+/* connect-mode highlight */
+.node.connect-source .node-pill { border-color:#a78bfa; box-shadow:0 0 20px rgba(167,139,250,0.4),0 4px 24px rgba(0,0,0,0.4); }
+.node.connect-target-hover .node-pill { border-color:#34d399; box-shadow:0 0 20px rgba(52,211,153,0.4),0 4px 24px rgba(0,0,0,0.4); }
+
+/* ── Glass buttons ── */
+.glass-btn {
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  background:var(--glass-bg); border:1px solid var(--glass-border);
+  border-radius:999px; color:var(--text-primary);
+  font-family:inherit; font-size:13px; font-weight:500;
+  padding:10px 20px; cursor:pointer;
+  transition:all 0.2s ease;
+  display:inline-flex; align-items:center; gap:8px;
+  position:relative; overflow:hidden; white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3),0 1px 0 rgba(255,255,255,0.08) inset;
+  -webkit-tap-highlight-color:transparent;
+}
+.glass-btn::before {
+  content:''; position:absolute; inset:0; border-radius:inherit;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 60%);
+  pointer-events:none;
+}
+.glass-btn:hover { background:var(--glass-hover); border-color:rgba(255,255,255,0.28); transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,0.4),0 1px 0 rgba(255,255,255,0.12) inset; }
+.glass-btn:active { background:var(--glass-active); transform:translateY(0) scale(0.98); }
+.glass-btn.primary { background:rgba(59,130,246,0.25); border-color:rgba(59,130,246,0.5); color:#93c5fd; box-shadow:0 0 20px rgba(59,130,246,0.15),0 4px 16px rgba(0,0,0,0.3),0 1px 0 rgba(255,255,255,0.08) inset; }
+.glass-btn.primary:hover { background:rgba(59,130,246,0.35); border-color:rgba(59,130,246,0.7); box-shadow:0 0 30px rgba(59,130,246,0.25),0 8px 24px rgba(0,0,0,0.4); }
+.glass-btn.violet { background:rgba(167,139,250,0.2); border-color:rgba(167,139,250,0.45); color:#c4b5fd; }
+.glass-btn.violet:hover { background:rgba(167,139,250,0.3); border-color:rgba(167,139,250,0.65); }
+.glass-btn.violet.active { background:rgba(167,139,250,0.35); border-color:#a78bfa; box-shadow:0 0 20px rgba(167,139,250,0.3),0 4px 16px rgba(0,0,0,0.3); }
+.glass-btn.danger { background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.3); color:#fca5a5; }
+.glass-btn.danger:hover { background:rgba(239,68,68,0.25); border-color:rgba(239,68,68,0.5); }
+
+/* ── Toolbar ── */
+#toolbar {
+  position:fixed; top:24px; left:50%; transform:translateX(-50%);
+  z-index:50; display:flex; align-items:center; gap:10px;
+  backdrop-filter:blur(30px) saturate(200%);
+  -webkit-backdrop-filter:blur(30px) saturate(200%);
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+  border-radius:999px; padding:8px 12px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4),0 1px 0 rgba(255,255,255,0.08) inset;
+}
+#toolbar-title { font-size:13px; font-weight:500; color:var(--text-secondary); padding:0 8px; }
+#toolbar .sep { width:1px; height:20px; background:rgba(255,255,255,0.12); margin:0 2px; }
+
+/* connect mode banner */
+#connect-banner {
+  position:fixed; top:90px; left:50%; transform:translateX(-50%);
+  z-index:50; display:none;
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  background:rgba(167,139,250,0.15); border:1px solid rgba(167,139,250,0.4);
+  border-radius:999px; padding:8px 20px;
+  font-size:12.5px; color:#c4b5fd; gap:10px; align-items:center;
+  box-shadow:0 0 30px rgba(167,139,250,0.15);
+}
+#connect-banner.visible { display:flex; }
+
+#hint { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:50; font-size:11.5px; color:var(--text-muted); letter-spacing:0.02em; pointer-events:none; text-align:center; }
+
+/* ── Card panel ── */
+#card-panel {
+  position:fixed; right:24px; top:50%;
+  transform:translateY(-50%) translateX(120%);
+  z-index:100; width:340px; max-height:calc(100vh - 100px);
+  backdrop-filter:blur(40px) saturate(200%);
+  -webkit-backdrop-filter:blur(40px) saturate(200%);
+  background:rgba(8,14,30,0.88);
+  border:1px solid rgba(255,255,255,0.12); border-radius:20px;
+  box-shadow:0 0 60px rgba(30,60,200,0.15),0 24px 64px rgba(0,0,0,0.6),0 1px 0 rgba(255,255,255,0.08) inset;
+  overflow:hidden; display:flex; flex-direction:column;
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s ease;
+  opacity:0;
+}
+#card-panel.open { transform:translateY(-50%) translateX(0); opacity:1; }
+
+.card-header { padding:20px 20px 0; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.card-title-wrap { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+#card-color-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; box-shadow:0 0 10px currentColor; }
+#card-title { font-size:17px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-close-btn { width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:var(--text-secondary); font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; flex-shrink:0; }
+.card-close-btn:hover { background:rgba(255,255,255,0.15); color:white; }
+
+.card-body { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:16px; }
+.card-body::-webkit-scrollbar { width:3px; }
+.card-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:3px; }
+
+.card-section-label { font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
+.card-divider { height:1px; background:rgba(255,255,255,0.06); margin:0 -20px; }
+
+#card-notes { width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:var(--text-primary); font-family:inherit; font-size:13.5px; line-height:1.6; padding:12px 14px; resize:none; min-height:90px; transition:border-color 0.2s; outline:none; }
+#card-notes:focus { border-color:rgba(59,130,246,0.4); background:rgba(255,255,255,0.06); }
+#card-notes::placeholder { color:var(--text-muted); }
+
+/* header photo in card */
+.card-header-photo-wrap { position:relative; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.1); }
+.card-header-photo-wrap img { width:100%; height:110px; object-fit:cover; display:block; }
+.card-header-photo-remove { position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.15); color:white; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; }
+.card-header-photo-remove:hover { background:rgba(239,68,68,0.7); }
+
+/* linked nodes list */
+.linked-node-item { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:8px 12px; font-size:12.5px; animation:fadeIn 0.2s ease; }
+.linked-node-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.linked-node-label { flex:1; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
+.linked-node-label:hover { color:#93c5fd; }
+.linked-node-remove { width:18px; height:18px; border-radius:50%; background:rgba(239,68,68,0.12); border:none; color:#fca5a5; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s; }
+.linked-node-remove:hover { background:rgba(239,68,68,0.25); }
+
+.link-item { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:8px 12px; font-size:12.5px; animation:fadeIn 0.2s ease; }
+.link-icon { width:22px; height:22px; border-radius:6px; background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:10px; }
+.link-url { flex:1; color:#93c5fd; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; text-decoration:none; }
+.link-url:hover { text-decoration:underline; }
+.link-delete { width:18px; height:18px; border-radius:50%; background:rgba(239,68,68,0.12); border:none; color:#fca5a5; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s; }
+.link-delete:hover { background:rgba(239,68,68,0.25); }
+
+.photos-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.photo-item { position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.08); animation:fadeIn 0.2s ease; cursor:pointer; }
+.photo-item img { width:100%; height:100%; object-fit:cover; display:block; }
+.photo-delete { position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.15); color:white; font-size:11px; cursor:pointer; display:none; align-items:center; justify-content:center; transition:background 0.2s; }
+.photo-item:hover .photo-delete { display:flex; }
+.photo-delete:hover { background:rgba(239,68,68,0.7); }
+
+.color-swatches { display:flex; gap:8px; flex-wrap:wrap; }
+.color-swatch { width:26px; height:26px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all 0.2s; }
+.color-swatch:hover { transform:scale(1.2); }
+.color-swatch.active { border-color:white; box-shadow:0 0 8px currentColor; }
+
+/* ── Modals ── */
+.modal-wrap {
+  position:fixed; inset:0; z-index:200;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity 0.2s;
+}
+.modal-wrap.open { opacity:1; pointer-events:all; }
+.modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+.modal-box {
+  position:relative; z-index:1; width:380px;
+  background:rgba(8,14,30,0.95);
+  border:1px solid rgba(255,255,255,0.14); border-radius:20px; padding:24px;
+  box-shadow:0 0 60px rgba(30,60,200,0.2),0 32px 80px rgba(0,0,0,0.7);
+  animation:modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes modalIn { from{transform:scale(0.9) translateY(10px);opacity:0} }
+.modal-title { font-size:16px; font-weight:600; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+.modal-tabs { display:flex; gap:6px; margin-bottom:18px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:4px; }
+.modal-tab { flex:1; padding:8px; border-radius:9px; background:transparent; border:none; color:var(--text-secondary); font-family:inherit; font-size:12.5px; font-weight:500; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px; }
+.modal-tab.active { background:rgba(255,255,255,0.1); color:var(--text-primary); box-shadow:0 1px 0 rgba(255,255,255,0.06) inset; }
+.modal-tab:hover:not(.active) { background:rgba(255,255,255,0.05); color:var(--text-primary); }
+.modal-pane { display:none; }
+.modal-pane.active { display:block; }
+
+.glass-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:var(--text-primary); font-family:inherit; font-size:13.5px; padding:11px 14px; outline:none; transition:border-color 0.2s,background 0.2s; margin-bottom:10px; }
+.glass-input:focus { border-color:rgba(59,130,246,0.5); background:rgba(255,255,255,0.08); }
+.glass-input::placeholder { color:var(--text-muted); }
+
+.photo-drop { border:1.5px dashed rgba(255,255,255,0.15); border-radius:14px; padding:28px; text-align:center; cursor:pointer; transition:all 0.2s; margin-bottom:10px; }
+.photo-drop:hover,.photo-drop.drag-over { border-color:rgba(59,130,246,0.5); background:rgba(59,130,246,0.05); }
+.photo-drop-icon { font-size:28px; margin-bottom:8px; color:var(--text-muted); }
+.photo-drop-text { font-size:12.5px; color:var(--text-secondary); }
+.photo-drop-sub { font-size:11px; color:var(--text-muted); margin-top:4px; }
+
+/* photo placement choice */
+.placement-choice { display:flex; gap:8px; margin-top:10px; margin-bottom:4px; }
+.placement-btn { flex:1; padding:10px 8px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:var(--text-secondary); font-family:inherit; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s; display:flex; flex-direction:column; align-items:center; gap:6px; }
+.placement-btn:hover { background:rgba(255,255,255,0.08); color:var(--text-primary); }
+.placement-btn.active { background:rgba(59,130,246,0.2); border-color:rgba(59,130,246,0.5); color:#93c5fd; }
+.placement-btn svg { opacity:0.7; }
+
+/* connect-node picker in modal */
+.node-picker-list { display:flex; flex-direction:column; gap:6px; max-height:260px; overflow-y:auto; margin-bottom:14px; }
+.node-picker-list::-webkit-scrollbar { width:3px; }
+.node-picker-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:3px; }
+.node-picker-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); cursor:pointer; transition:all 0.2s; font-size:13px; }
+.node-picker-item:hover { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.18); }
+.node-picker-item.selected { background:rgba(59,130,246,0.15); border-color:rgba(59,130,246,0.4); }
+
+/* lightbox */
+#lightbox { position:fixed; inset:0; z-index:300; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; backdrop-filter:blur(10px); }
+#lightbox.open { opacity:1; pointer-events:all; }
+#lightbox img { max-width:90vw; max-height:90vh; border-radius:12px; object-fit:contain; }
+
+/* live connect wire */
+#live-wire { position:fixed; inset:0; z-index:4; pointer-events:none; overflow:visible; }
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<svg id="lines" xmlns="http://www.w3.org/2000/svg"></svg>
+<svg id="live-wire" xmlns="http://www.w3.org/2000/svg"></svg>
+<div id="canvas"></div>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <span id="toolbar-title">✦ MindMap</span>
+  <div class="sep"></div>
+  <button class="glass-btn" onclick="openAddNodeModal()">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 4v6M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    Add Node
+  </button>
+  <button class="glass-btn violet" id="connect-btn" onclick="toggleConnectMode()">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="2.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="1.5 1.5"/></svg>
+    Connect
+  </button>
+  <button class="glass-btn" onclick="openEditNameModal()">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5L11.5 4.5L5 11H3V9L9.5 2.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+    Edit Name
+  </button>
+  <button class="glass-btn" onclick="resetView()">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7" r="2" fill="currentColor"/></svg>
+    Center
+  </button>
+  <span id="save-indicator" style="font-size:11px;color:var(--text-muted);padding:0 6px;transition:opacity 0.6s;opacity:0;pointer-events:none;">✓ Saved</span>
+</div>
+
+<!-- Connect banner -->
+<div id="connect-banner">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="2.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="1.5 1.5"/></svg>
+  <span id="connect-banner-text">Click a node to start a connection</span>
+  <button class="glass-btn" style="padding:5px 14px;font-size:12px;" onclick="cancelConnect()">Cancel</button>
+</div>
+
+<div id="hint">Drag to pan &nbsp;·&nbsp; Drag nodes to reposition &nbsp;·&nbsp; Click to open card &nbsp;·&nbsp; Use Connect to link nodes</div>
+
+<!-- Card Panel -->
+<div id="card-panel">
+  <div class="card-header">
+    <div class="card-title-wrap">
+      <div id="card-color-dot" style="background:#60a5fa;color:#60a5fa;"></div>
+      <div id="card-title">Node</div>
+    </div>
+    <button class="card-close-btn" onclick="closeCard()">✕</button>
+  </div>
+  <div class="card-body">
+    <!-- Header photo -->
+    <div id="header-photo-section">
+      <div class="card-section-label">Header Photo</div>
+      <div id="header-photo-display"></div>
+      <button class="glass-btn" style="width:100%;justify-content:center;font-size:12px;padding:8px;" onclick="triggerHeaderPhotoUpload()" id="add-header-photo-btn">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="2" width="11" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="4.5" cy="5" r="1" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 11L5 8L7 10L9 8L11.5 11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Set Header Photo
+      </button>
+      <input type="file" id="header-photo-input" accept="image/*" style="display:none" onchange="handleHeaderPhotoUpload(event)">
+    </div>
+    <div class="card-divider"></div>
+    <!-- Color -->
+    <div>
+      <div class="card-section-label">Color</div>
+      <div class="color-swatches" id="color-swatches"></div>
+    </div>
+    <div class="card-divider"></div>
+    <!-- Notes (hidden for photo-only nodes) -->
+    <div id="notes-section">
+      <div class="card-section-label">Notes</div>
+      <textarea id="card-notes" placeholder="Add notes…" rows="4" oninput="saveNotes()"></textarea>
+    </div>
+    <!-- Linked nodes -->
+    <div id="linked-nodes-section" style="display:none">
+      <div class="card-section-label">Linked Nodes</div>
+      <div id="linked-nodes-list"></div>
+    </div>
+    <!-- Links -->
+    <div id="links-section" style="display:none">
+      <div class="card-section-label">Links</div>
+      <div id="links-list"></div>
+    </div>
+    <!-- Photos -->
+    <div id="photos-section" style="display:none">
+      <div class="card-section-label">Photos</div>
+      <div class="photos-grid" id="photos-grid"></div>
+    </div>
+    <!-- Actions -->
+    <button class="glass-btn violet" style="width:100%;justify-content:center;" onclick="startConnectFromCard()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="2.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="1.5 1.5"/></svg>
+      Link to Another Node
+    </button>
+    <button class="glass-btn primary" style="width:100%;justify-content:center;" onclick="openAddMediaModal()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 4v6M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Add Media
+    </button>
+    <button class="glass-btn danger" style="width:100%;justify-content:center;" onclick="deleteCurrentNode()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M5.5 3.5V2.5h3V3.5M4.5 3.5l.5 8h4l.5-8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Delete Node
+    </button>
+  </div>
+</div>
+
+<!-- Add Node Modal -->
+<div class="modal-wrap" id="add-node-modal">
+  <div class="modal-backdrop" onclick="closeAddNodeModal()"></div>
+  <div class="modal-box">
+    <div class="modal-title">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 5v8M5 9h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      New Node
+    </div>
+    <input class="glass-input" id="new-node-input" placeholder="Node title (leave blank for photo-only)…" maxlength="40" onkeydown="if(event.key==='Enter')addNode()">
+    <div style="font-size:11.5px;color:var(--text-muted);margin:-4px 0 12px;">Leave blank to create a photo-only node</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Connect to:</div>
+    <div class="node-picker-list" id="add-node-parent-list"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+      <button class="glass-btn" onclick="closeAddNodeModal()">Cancel</button>
+      <button class="glass-btn primary" onclick="addNode()">Add Node</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Name Modal -->
+<div class="modal-wrap" id="edit-name-modal">
+  <div class="modal-backdrop" onclick="closeEditNameModal()"></div>
+  <div class="modal-box">
+    <div class="modal-title">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M12 3L15 6L6.5 14.5H3V11L12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      Edit Your Name
+    </div>
+    <input class="glass-input" id="edit-name-input" placeholder="Your name…" maxlength="30" onkeydown="if(event.key==='Enter')saveEditName()">
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+      <button class="glass-btn" onclick="closeEditNameModal()">Cancel</button>
+      <button class="glass-btn primary" onclick="saveEditName()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Media Modal -->
+<div class="modal-wrap" id="add-media-modal">
+  <div class="modal-backdrop" onclick="closeAddMediaModal()"></div>
+  <div class="modal-box">
+    <div class="modal-title">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 5v8M5 9h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Add Media
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-link" onclick="switchModalTab('link',this)">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M5 8L8 5M3.5 6.5L2 8a2.5 2.5 0 003.5 3.5L7 10M10 6.5l1.5-1.5A2.5 2.5 0 007 1.5L5.5 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Link
+      </button>
+      <button class="modal-tab" id="tab-photo" onclick="switchModalTab('photo',this)">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="2.5" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="4.5" cy="5.5" r="1" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 10L4.5 7.5L6.5 9.5L8.5 7.5L11.5 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Photo
+      </button>
+    </div>
+    <div class="modal-pane active" id="pane-link">
+      <input class="glass-input" id="link-url-input" placeholder="https://…" type="url">
+      <input class="glass-input" id="link-label-input" placeholder="Label (optional)">
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+        <button class="glass-btn" onclick="closeAddMediaModal()">Cancel</button>
+        <button class="glass-btn primary" onclick="addLink()">Add Link</button>
+      </div>
+    </div>
+    <div class="modal-pane" id="pane-photo">
+      <div class="photo-drop" id="photo-drop" onclick="triggerPhotoUpload()" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
+        <div class="photo-drop-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="2" y="6" width="28" height="20" rx="3" stroke="currentColor" stroke-width="1.5"/><circle cx="11" cy="13" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 26L10 19L14 23L20 17L29 26" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="photo-drop-text">Click to upload or drag &amp; drop</div>
+        <div class="photo-drop-sub">PNG, JPG, GIF, WebP · multiple files ok</div>
+      </div>
+      <input type="file" id="photo-file-input" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(event)">
+      <!-- placement choice -->
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Where to place the photo?</div>
+      <div class="placement-choice">
+        <button class="placement-btn active" id="place-gallery" onclick="setPlacement('gallery',this)">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/><circle cx="7" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 18L7 13L10 16L14 12L19.5 18" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          In card gallery
+        </button>
+        <button class="placement-btn" id="place-new-node" onclick="setPlacement('new-node',this)">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M2 11h3M17 11h3M4 4l2.5 2.5M15.5 15.5L18 18" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><rect x="7" y="7" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+          As new photo node
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+        <button class="glass-btn" onclick="closeAddMediaModal()">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="Photo">
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let centerName = 'Your Name';
+let nodes = [];
+let edges = []; // {id, from:'center'|nodeId, to:nodeId}
+let panX = 0, panY = 0;
+let activeNodeId = null;
+let isPanning = false, panStart = {x:0,y:0};
+let dragNode = null, dragOffset = {x:0,y:0};
+let connectMode = false, connectSource = null;
+let photoPlacement = 'gallery';
+
+const NODE_COLORS = [
+  {id:'blue',   color:'#60a5fa'},{id:'violet',color:'#a78bfa'},
+  {id:'rose',   color:'#fb7185'},{id:'amber', color:'#fbbf24'},
+  {id:'emerald',color:'#34d399'},{id:'cyan',  color:'#22d3ee'},
+  {id:'pink',   color:'#f472b6'},{id:'white', color:'#e2e8f0'},
+];
+function getColor(id){ return (NODE_COLORS.find(c=>c.id===id)||NODE_COLORS[0]).color; }
+
+// ── Stars ──────────────────────────────────────────────────────────────
+function createStars(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<120;i++){
+    const s=document.createElement('div'); s.className='star';
+    const sz=Math.random()<0.7?1:Math.random()<0.5?1.5:2;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${Math.random()*5}s;--max-op:${0.2+Math.random()*0.5};`;
+    c.appendChild(s);
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+const canvas=document.getElementById('canvas');
+const svgLines=document.getElementById('lines');
+const liveWire=document.getElementById('live-wire');
+
+function w2s(wx,wy){ return {x:window.innerWidth/2+panX+wx, y:window.innerHeight/2+panY+wy}; }
+function esc(s){ const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+
+function getNodePos(id){
+  if(id==='center') return {x:0,y:0};
+  const n=nodes.find(n=>n.id===id);
+  return n?{x:n.x,y:n.y}:{x:0,y:0};
+}
+
+// edges helpers
+function getEdgesForNode(id){ return edges.filter(e=>e.from===id||e.to===id); }
+function edgeExists(a,b){ return edges.some(e=>(e.from===a&&e.to===b)||(e.from===b&&e.to===a)); }
+function removeEdge(id){ edges=edges.filter(e=>e.id!==id); }
+
+// ── Render ─────────────────────────────────────────────────────────────
+function renderLines(){
+  svgLines.innerHTML='';
+  edges.forEach(edge=>{
+    const a=w2s(...Object.values(getNodePos(edge.from)));
+    const b=w2s(...Object.values(getNodePos(edge.to)));
+    const fromNode=edge.from==='center'?null:nodes.find(n=>n.id===edge.from);
+    const toNode=nodes.find(n=>n.id===edge.to);
+    const isActive=(activeNodeId===edge.from||activeNodeId===edge.to);
+    const color=isActive?(getColor(fromNode?.color||toNode?.color||'blue')):'rgba(255,255,255,0.07)';
+    const dx=b.x-a.x,dy=b.y-a.y;
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M${a.x},${a.y} C${a.x+dx*0.5},${a.y+dy*0.1} ${a.x+dx*0.5},${b.y-dy*0.1} ${b.x},${b.y}`);
+    path.setAttribute('stroke',isActive?color+'88':color);
+    path.setAttribute('stroke-width',isActive?'2':'1.5');
+    path.setAttribute('fill','none');
+    svgLines.appendChild(path);
+  });
+}
+
+function renderNodes(){
+  canvas.innerHTML='';
+  // center
+  const cp=w2s(0,0);
+  const ce=document.createElement('div');
+  ce.className='node node-center';
+  ce.style.cssText=`left:${cp.x}px;top:${cp.y}px;`;
+  ce.innerHTML=`<div class="node-inner"><div class="node-pill">${esc(centerName)}</div></div>`;
+  ce.addEventListener('dblclick',openEditNameModal);
+  if(connectMode){
+    ce.addEventListener('click',e=>{e.stopPropagation();handleConnectClick('center');});
+    if(connectSource&&connectSource!=='center') ce.classList.add('connect-target-hover');
+  }
+  canvas.appendChild(ce);
+
+  nodes.forEach(node=>{
+    const pos=w2s(node.x,node.y);
+    const color=getColor(node.color||'blue');
+    const isActive=activeNodeId===node.id;
+    const isPhotoOnly=node.photoOnly;
+
+    const el=document.createElement('div');
+    el.className='node'+(isPhotoOnly?' node-photo-only':'')+(connectMode&&connectSource===node.id?' connect-source':'');
+    el.dataset.id=node.id;
+    el.style.cssText=`left:${pos.x}px;top:${pos.y}px;`;
+
+    let inner='<div class="node-inner">';
+
+    if(isPhotoOnly){
+      // photo bubble — show first photo or placeholder
+      const src=node.photos&&node.photos.length?node.photos[0]:'';
+      inner+=`<div class="node-photo-bubble" style="${isActive?'box-shadow:0 0 20px '+color+'44,0 4px 24px rgba(0,0,0,0.5);border-color:'+color+'66;':''}">`;
+      if(src) inner+=`<img src="${src}" alt="">`;
+      else inner+=`<div style="width:120px;height:120px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.04);color:var(--text-muted);font-size:11px;">No photo</div>`;
+      inner+=`</div>`;
+    } else {
+      // header photo?
+      if(node.headerPhoto){
+        inner+=`<div class="node-header-photo"><img src="${node.headerPhoto}" alt=""></div>`;
+      }
+      inner+=`<div class="node-pill" style="${isActive?'border-color:'+color+'66;box-shadow:0 0 20px '+color+'22,0 4px 24px rgba(0,0,0,0.4);':''}${node.headerPhoto?'border-radius:0 0 999px 999px;border-top:none;':''}">
+        <div class="node-dot" style="background:${color};color:${color};"></div>
+        ${esc(node.title)}
+      </div>`;
+    }
+    inner+='</div>';
+    el.innerHTML=inner;
+
+    el.addEventListener('mousedown',e=>startNodeDrag(e,node.id));
+    el.addEventListener('touchstart',e=>startNodeDragTouch(e,node.id),{passive:false});
+
+    if(connectMode){
+      el.addEventListener('click',e=>{e.stopPropagation();handleConnectClick(node.id);});
+      if(connectSource&&connectSource!==node.id) el.classList.add('connect-target-hover');
+      if(connectSource===node.id) el.classList.add('connect-source');
+    } else {
+      el.addEventListener('click',e=>{e.stopPropagation();openCard(node.id);});
+    }
+    canvas.appendChild(el);
+  });
+  renderLines();
+}
+
+// ── Pan ────────────────────────────────────────────────────────────────
+canvas.addEventListener('mousedown',e=>{
+  if(connectMode) return;
+  if(e.target===canvas||e.target.closest('.node-center')){
+    isPanning=true; panStart={x:e.clientX-panX,y:e.clientY-panY};
+  }
+});
+window.addEventListener('mousemove',e=>{
+  if(isPanning&&!dragNode){ panX=e.clientX-panStart.x; panY=e.clientY-panStart.y; renderNodes(); }
+  if(dragNode){
+    const node=nodes.find(n=>n.id===dragNode);
+    if(node){ node.x=e.clientX-panX-window.innerWidth/2-dragOffset.x; node.y=e.clientY-panY-window.innerHeight/2-dragOffset.y; renderNodes(); }
+  }
+  if(connectMode&&connectSource){
+    liveWire.innerHTML='';
+    const src=connectSource==='center'?w2s(0,0):w2s(...Object.values(getNodePos(connectSource)));
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    const dx=e.clientX-src.x,dy=e.clientY-src.y;
+    path.setAttribute('d',`M${src.x},${src.y} C${src.x+dx*0.5},${src.y} ${src.x+dx*0.5},${e.clientY} ${e.clientX},${e.clientY}`);
+    path.setAttribute('stroke','rgba(167,139,250,0.5)'); path.setAttribute('stroke-width','1.5'); path.setAttribute('fill','none');
+    path.setAttribute('stroke-dasharray','6 4');
+    liveWire.appendChild(path);
+  }
+});
+window.addEventListener('mouseup',()=>{ isPanning=false; if(!connectMode) dragNode=null; });
+
+let touchStart2=null;
+canvas.addEventListener('touchstart',e=>{
+  if(connectMode||dragNode) return;
+  if(e.touches.length===1&&e.target===canvas){ touchStart2={x:e.touches[0].clientX-panX,y:e.touches[0].clientY-panY}; }
+},{passive:true});
+canvas.addEventListener('touchmove',e=>{
+  if(touchStart2&&!dragNode&&e.touches.length===1){ panX=e.touches[0].clientX-touchStart2.x; panY=e.touches[0].clientY-touchStart2.y; renderNodes(); }
+},{passive:true});
+canvas.addEventListener('touchend',()=>{touchStart2=null;});
+
+function startNodeDrag(e,id){
+  if(connectMode) return;
+  e.preventDefault(); e.stopPropagation(); dragNode=id;
+  const node=nodes.find(n=>n.id===id);
+  const pos=w2s(node.x,node.y);
+  dragOffset={x:e.clientX-pos.x,y:e.clientY-pos.y};
+}
+function startNodeDragTouch(e,id){
+  if(connectMode||e.touches.length!==1) return;
+  e.stopPropagation(); dragNode=id;
+  const node=nodes.find(n=>n.id===id);
+  const pos=w2s(node.x,node.y);
+  dragOffset={x:e.touches[0].clientX-pos.x,y:e.touches[0].clientY-pos.y};
+}
+window.addEventListener('touchmove',e=>{
+  if(dragNode&&e.touches.length===1){
+    const node=nodes.find(n=>n.id===dragNode);
+    if(node){ node.x=e.touches[0].clientX-panX-window.innerWidth/2-dragOffset.x; node.y=e.touches[0].clientY-panY-window.innerHeight/2-dragOffset.y; renderNodes(); }
+  }
+},{passive:true});
+window.addEventListener('touchend',()=>{dragNode=null;});
+
+function resetView(){ panX=0;panY=0;renderNodes(); }
+
+// ── Connect mode ───────────────────────────────────────────────────────
+function toggleConnectMode(){
+  connectMode=!connectMode;
+  connectSource=null;
+  liveWire.innerHTML='';
+  document.getElementById('connect-btn').classList.toggle('active',connectMode);
+  document.getElementById('connect-banner').classList.toggle('visible',connectMode);
+  document.getElementById('connect-banner-text').textContent='Click a node to start a connection';
+  if(connectMode) closeCard();
+  renderNodes();
+}
+function cancelConnect(){ connectMode=false; connectSource=null; liveWire.innerHTML=''; document.getElementById('connect-btn').classList.remove('active'); document.getElementById('connect-banner').classList.remove('visible'); renderNodes(); }
+function startConnectFromCard(){
+  const src=activeNodeId;
+  closeCard();
+  connectMode=true;
+  connectSource=src;
+  document.getElementById('connect-btn').classList.add('active');
+  document.getElementById('connect-banner').classList.add('visible');
+  document.getElementById('connect-banner-text').textContent='Now click the target node to connect';
+  renderNodes();
+}
+function handleConnectClick(id){
+  if(!connectSource){
+    connectSource=id;
+    document.getElementById('connect-banner-text').textContent='Now click the target node to connect';
+    renderNodes(); return;
+  }
+  if(id===connectSource){ connectSource=null; liveWire.innerHTML=''; renderNodes(); return; }
+  if(!edgeExists(connectSource,id)){
+    edges.push({id:'e'+Date.now(),from:connectSource,to:id});
+  }
+  cancelConnect();
+}
+
+// ── Add Node ───────────────────────────────────────────────────────────
+let selectedParent='center';
+function openAddNodeModal(){
+  selectedParent='center';
+  const list=document.getElementById('add-node-parent-list');
+  list.innerHTML='';
+  // center option
+  const ci=document.createElement('div');
+  ci.className='node-picker-item selected';
+  ci.dataset.id='center';
+  ci.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.5);"></div><span>Center (${esc(centerName)})</span>`;
+  ci.onclick=()=>{ selectedParent='center'; list.querySelectorAll('.node-picker-item').forEach(x=>x.classList.remove('selected')); ci.classList.add('selected'); };
+  list.appendChild(ci);
+  nodes.forEach(n=>{
+    if(n.photoOnly) return;
+    const item=document.createElement('div');
+    item.className='node-picker-item';
+    item.dataset.id=n.id;
+    item.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:${getColor(n.color||'blue')};box-shadow:0 0 6px ${getColor(n.color||'blue')}88;"></div><span>${esc(n.title)}</span>`;
+    item.onclick=()=>{ selectedParent=n.id; list.querySelectorAll('.node-picker-item').forEach(x=>x.classList.remove('selected')); item.classList.add('selected'); };
+    list.appendChild(item);
+  });
+  document.getElementById('add-node-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('new-node-input').focus(),100);
+}
+function closeAddNodeModal(){ document.getElementById('add-node-modal').classList.remove('open'); document.getElementById('new-node-input').value=''; }
+
+function addNode(){
+  const title=document.getElementById('new-node-input').value.trim();
+  const isPhotoOnly=!title;
+  const parentId=selectedParent;
+  const parentPos=getNodePos(parentId);
+  const angle=Math.random()*Math.PI*2;
+  const radius=180+Math.random()*60;
+  const id='node_'+Date.now();
+  nodes.push({
+    id, title:title||'', photoOnly:isPhotoOnly,
+    x:parentPos.x+Math.cos(angle)*radius,
+    y:parentPos.y+Math.sin(angle)*radius,
+    color:'blue', notes:'', links:[], photos:[], headerPhoto:null
+  });
+  edges.push({id:'e'+Date.now(),from:parentId,to:id});
+  closeAddNodeModal();
+  renderNodes();
+  openCard(id);
+}
+
+// ── Edit Name ──────────────────────────────────────────────────────────
+function openEditNameModal(){
+  const el=document.getElementById('edit-name-modal');
+  el.classList.add('open');
+  const inp=document.getElementById('edit-name-input');
+  inp.value=centerName;
+  setTimeout(()=>inp.focus(),100);
+}
+function closeEditNameModal(){ document.getElementById('edit-name-modal').classList.remove('open'); }
+function saveEditName(){
+  const v=document.getElementById('edit-name-input').value.trim();
+  if(v){centerName=v;renderNodes();}
+  closeEditNameModal();
+}
+
+// ── Card ───────────────────────────────────────────────────────────────
+function openCard(id){
+  activeNodeId=id;
+  const node=nodes.find(n=>n.id===id);
+  if(!node) return;
+  renderNodes();
+  const color=getColor(node.color||'blue');
+  document.getElementById('card-title').textContent=node.photoOnly?'Photo Node':node.title;
+  const dot=document.getElementById('card-color-dot');
+  dot.style.background=color; dot.style.color=color;
+  document.getElementById('card-notes').value=node.notes||'';
+  // show/hide notes for photo-only
+  document.getElementById('notes-section').style.display=node.photoOnly?'none':'block';
+  document.getElementById('header-photo-section').style.display=node.photoOnly?'none':'block';
+  renderHeaderPhoto(node);
+  renderCardLinks(node);
+  renderCardPhotos(node);
+  renderLinkedNodes(node);
+  renderColorSwatches(node);
+  document.getElementById('card-panel').classList.add('open');
+}
+function closeCard(){ activeNodeId=null; document.getElementById('card-panel').classList.remove('open'); renderNodes(); }
+function saveNotes(){ if(!activeNodeId) return; const n=nodes.find(n=>n.id===activeNodeId); if(n) n.notes=document.getElementById('card-notes').value; }
+
+// ── Header photo ───────────────────────────────────────────────────────
+function renderHeaderPhoto(node){
+  const wrap=document.getElementById('header-photo-display');
+  wrap.innerHTML='';
+  if(node.headerPhoto){
+    wrap.innerHTML=`<div class="card-header-photo-wrap" style="margin-bottom:8px;"><img src="${node.headerPhoto}" alt=""><button class="card-header-photo-remove" onclick="removeHeaderPhoto()" title="Remove">✕</button></div>`;
+    document.getElementById('add-header-photo-btn').textContent='Change Header Photo';
+  } else {
+    document.getElementById('add-header-photo-btn').innerHTML=`<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="2" width="11" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="4.5" cy="5" r="1" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 11L5 8L7 10L9 8L11.5 11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Set Header Photo`;
+  }
+}
+function triggerHeaderPhotoUpload(){ document.getElementById('header-photo-input').click(); }
+function handleHeaderPhotoUpload(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ const n=nodes.find(n=>n.id===activeNodeId); if(!n) return; n.headerPhoto=ev.target.result; renderHeaderPhoto(n); renderNodes(); };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+function removeHeaderPhoto(){ const n=nodes.find(n=>n.id===activeNodeId); if(!n) return; n.headerPhoto=null; renderHeaderPhoto(n); renderNodes(); }
+
+// ── Linked nodes ───────────────────────────────────────────────────────
+function renderLinkedNodes(node){
+  const section=document.getElementById('linked-nodes-section');
+  const list=document.getElementById('linked-nodes-list');
+  list.innerHTML='';
+  const nodeEdges=getEdgesForNode(node.id);
+  if(!nodeEdges.length){ section.style.display='none'; return; }
+  section.style.display='block';
+  nodeEdges.forEach(edge=>{
+    const otherId=edge.from===node.id?edge.to:edge.from;
+    const otherLabel=otherId==='center'?centerName:(nodes.find(n=>n.id===otherId)?.title||'Unknown');
+    const otherColor=otherId==='center'?'#e2e8f0':getColor(nodes.find(n=>n.id===otherId)?.color||'blue');
+    const item=document.createElement('div');
+    item.className='linked-node-item';
+    item.innerHTML=`<div class="linked-node-dot" style="background:${otherColor};box-shadow:0 0 6px ${otherColor}88;"></div><span class="linked-node-label" onclick="otherId!=='center'&&openCard('${otherId}')">${esc(otherLabel)}</span><button class="linked-node-remove" onclick="disconnectEdge('${edge.id}')" title="Disconnect">✕</button>`;
+    list.appendChild(item);
+  });
+}
+function disconnectEdge(edgeId){ removeEdge(edgeId); const n=nodes.find(n=>n.id===activeNodeId); if(n){renderLinkedNodes(n);renderNodes();} }
+
+// ── Color Swatches ─────────────────────────────────────────────────────
+function renderColorSwatches(node){
+  const c=document.getElementById('color-swatches'); c.innerHTML='';
+  NODE_COLORS.forEach(col=>{
+    const sw=document.createElement('div');
+    sw.className='color-swatch'+(node.color===col.id?' active':'');
+    sw.style.cssText=`background:${col.color};box-shadow:0 0 8px ${col.color}44;`;
+    sw.onclick=()=>{ node.color=col.id; openCard(node.id); renderNodes(); };
+    c.appendChild(sw);
+  });
+}
+
+// ── Links ──────────────────────────────────────────────────────────────
+function renderCardLinks(node){
+  const sec=document.getElementById('links-section');
+  const list=document.getElementById('links-list'); list.innerHTML='';
+  if(!node.links||!node.links.length){ sec.style.display='none'; return; }
+  sec.style.display='block';
+  node.links.forEach((link,i)=>{
+    const item=document.createElement('div'); item.className='link-item';
+    item.innerHTML=`<div class="link-icon"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M4 7L7 4M2.5 5.5L1.5 6.5a2 2 0 002.8 2.8L5.5 8M8 5.5l1-1A2 2 0 006.2 1.7L5 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div><a class="link-url" href="${esc(link.url)}" target="_blank" rel="noopener">${esc(link.label||link.url)}</a><button class="link-delete" onclick="deleteLink(${i})">✕</button>`;
+    list.appendChild(item);
+  });
+}
+function deleteLink(i){ const n=nodes.find(n=>n.id===activeNodeId);if(!n)return;n.links.splice(i,1);renderCardLinks(n); }
+
+// ── Photos ─────────────────────────────────────────────────────────────
+function renderCardPhotos(node){
+  const sec=document.getElementById('photos-section');
+  const grid=document.getElementById('photos-grid'); grid.innerHTML='';
+  if(!node.photos||!node.photos.length){ sec.style.display='none'; return; }
+  sec.style.display='block';
+  node.photos.forEach((photo,i)=>{
+    const item=document.createElement('div'); item.className='photo-item';
+    item.innerHTML=`<img src="${photo}" alt="" onclick="openLightbox('${photo}')"><button class="photo-delete" onclick="deletePhoto(${i})">✕</button>`;
+    grid.appendChild(item);
+  });
+}
+function deletePhoto(i){ const n=nodes.find(n=>n.id===activeNodeId);if(!n)return;n.photos.splice(i,1);if(n.photoOnly)renderNodes();renderCardPhotos(n); }
+function openLightbox(src){ document.getElementById('lightbox-img').src=src; document.getElementById('lightbox').classList.add('open'); }
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); }
+
+// ── Delete Node ────────────────────────────────────────────────────────
+function deleteCurrentNode(){
+  if(!activeNodeId) return;
+  edges=edges.filter(e=>e.from!==activeNodeId&&e.to!==activeNodeId);
+  nodes=nodes.filter(n=>n.id!==activeNodeId);
+  activeNodeId=null; closeCard(); renderNodes();
+}
+
+// ── Add Media Modal ────────────────────────────────────────────────────
+function openAddMediaModal(){ document.getElementById('add-media-modal').classList.add('open'); switchModalTab('link',document.getElementById('tab-link')); }
+function closeAddMediaModal(){ document.getElementById('add-media-modal').classList.remove('open'); document.getElementById('link-url-input').value=''; document.getElementById('link-label-input').value=''; }
+function switchModalTab(tab,btn){
+  document.querySelectorAll('.modal-tab').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active');
+  document.querySelectorAll('.modal-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+tab).classList.add('active');
+}
+function setPlacement(p,btn){ photoPlacement=p; document.querySelectorAll('.placement-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+
+function addLink(){
+  const url=document.getElementById('link-url-input').value.trim(); if(!url) return;
+  const label=document.getElementById('link-label-input').value.trim();
+  const node=nodes.find(n=>n.id===activeNodeId); if(!node) return;
+  if(!node.links) node.links=[];
+  node.links.push({url,label:label||url});
+  renderCardLinks(node); closeAddMediaModal();
+}
+
+function triggerPhotoUpload(){ document.getElementById('photo-file-input').click(); }
+
+function handlePhotoUpload(e){
+  const files=e.target.files; if(!files.length) return;
+  Array.from(files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const src=ev.target.result;
+      if(photoPlacement==='new-node'){
+        // create new photo-only node connected to current
+        const parentNode=nodes.find(n=>n.id===activeNodeId);
+        const parentPos=parentNode?{x:parentNode.x,y:parentNode.y}:{x:0,y:0};
+        const angle=Math.random()*Math.PI*2;
+        const id='node_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+        nodes.push({id,title:'',photoOnly:true,x:parentPos.x+Math.cos(angle)*170,y:parentPos.y+Math.sin(angle)*170,color:'blue',notes:'',links:[],photos:[src],headerPhoto:null});
+        edges.push({id:'e'+Date.now()+'_'+id,from:activeNodeId,to:id});
+        renderNodes();
+      } else {
+        const node=nodes.find(n=>n.id===activeNodeId); if(!node) return;
+        if(!node.photos) node.photos=[];
+        node.photos.push(src);
+        if(node.photoOnly) renderNodes();
+        renderCardPhotos(node);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value='';
+}
+
+function handleDragOver(e){ e.preventDefault(); document.getElementById('photo-drop').classList.add('drag-over'); }
+function handleDragLeave(){ document.getElementById('photo-drop').classList.remove('drag-over'); }
+function handleDrop(e){
+  e.preventDefault(); document.getElementById('photo-drop').classList.remove('drag-over');
+  const files=e.dataTransfer.files; if(!files.length) return;
+  const fakeEvent={target:{files:Array.from(files).filter(f=>f.type.startsWith('image/'))}};
+  // reuse handler
+  Array.from(fakeEvent.target.files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const src=ev.target.result;
+      if(photoPlacement==='new-node'){
+        const parentNode=nodes.find(n=>n.id===activeNodeId);
+        const parentPos=parentNode?{x:parentNode.x,y:parentNode.y}:{x:0,y:0};
+        const angle=Math.random()*Math.PI*2;
+        const id='node_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+        nodes.push({id,title:'',photoOnly:true,x:parentPos.x+Math.cos(angle)*170,y:parentPos.y+Math.sin(angle)*170,color:'blue',notes:'',links:[],photos:[src],headerPhoto:null});
+        edges.push({id:'e'+Date.now()+'_'+id,from:activeNodeId,to:id});
+        renderNodes();
+      } else {
+        const node=nodes.find(n=>n.id===activeNodeId); if(!node) return;
+        if(!node.photos) node.photos=[];
+        node.photos.push(src);
+        if(node.photoOnly) renderNodes();
+        renderCardPhotos(node);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Save / Load ────────────────────────────────────────────────────────
+const STORAGE_KEY = 'mindmap_v1';
+
+function saveState() {
+  try {
+    const state = { centerName, nodes, edges, panX, panY };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e) {
+    // localStorage full (photos are large base64) — silently ignore
+    console.warn('MindMap: could not save to localStorage', e);
+  }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    centerName = state.centerName || 'Your Name';
+    nodes = state.nodes || [];
+    edges = state.edges || [];
+    panX = state.panX || 0;
+    panY = state.panY || 0;
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+// Patch every state-mutating function to auto-save after changes.
+// We do this by wrapping the render call — any render = state changed.
+const _renderNodes = renderNodes;
+let _saveTimer = null;
+renderNodes = function() {
+  _renderNodes();
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveState, 400); // debounce 400ms
+};
+
+// Also save notes immediately on input (textarea oninput already calls saveNotes,
+// but we need to persist to localStorage too)
+const _saveNotes = saveNotes;
+saveNotes = function() {
+  _saveNotes();
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveState, 400);
+};
+
+// ── Init ──────────────────────────────────────────────────────────────
+createStars();
+
+const loaded = loadState();
+if (!loaded) {
+  // First-time defaults
+  nodes=[
+    {id:'n1',title:'Projects',photoOnly:false,x:-220,y:-130,color:'blue',notes:'All ongoing projects and ideas',links:[],photos:[],headerPhoto:null},
+    {id:'n2',title:'Goals',photoOnly:false,x:160,y:-190,color:'emerald',notes:'Short and long term goals',links:[],photos:[],headerPhoto:null},
+    {id:'n3',title:'Inspiration',photoOnly:false,x:260,y:80,color:'violet',notes:'',links:[],photos:[],headerPhoto:null},
+    {id:'n4',title:'Contacts',photoOnly:false,x:-50,y:210,color:'amber',notes:'Key people to remember',links:[],photos:[],headerPhoto:null},
+    {id:'n5',title:'Ideas',photoOnly:false,x:-230,y:110,color:'rose',notes:'',links:[],photos:[],headerPhoto:null},
+  ];
+  edges=[
+    {id:'e1',from:'center',to:'n1'},{id:'e2',from:'center',to:'n2'},
+    {id:'e3',from:'center',to:'n3'},{id:'e4',from:'center',to:'n4'},
+    {id:'e5',from:'center',to:'n5'},
+  ];
+}
+
+renderNodes();
+</script>
+</body>
+</html>
