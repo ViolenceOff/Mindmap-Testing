@@ -1,123 +1,1136 @@
-<!DOCTYPE html>
+content = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MindMap — Liquid Glass Edition</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>MindMap</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;700&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-:root {
-  --glass-bg: rgba(255, 255, 255, 0.04);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-hover: rgba(255, 255, 255, 0.09);
-  --glass-active: rgba(255, 255, 255, 0.15);
-  --text-primary: rgba(255, 255, 255, 0.96);
-  --text-secondary: rgba(255, 255, 255, 0.65);
-  --text-muted: rgba(255, 255, 255, 0.4);
-  --bg-glow-color: rgba(15, 50, 180, 0.4);
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --glass-bg:rgba(255,255,255,0.07);--glass-border:rgba(255,255,255,0.15);
+  --glass-hover:rgba(255,255,255,0.12);--glass-active:rgba(255,255,255,0.18);
+  --text-primary:rgba(255,255,255,0.95);--text-secondary:rgba(255,255,255,0.6);
+  --text-muted:rgba(255,255,255,0.35);
+  --glow-r:15;--glow-g:50;--glow-b:180;
 }
-body {
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
-  background:#03060f;
-  color:var(--text-primary);
-  height:100vh; overflow:hidden;
-  position:relative; cursor:default; user-select:none;
-}
-/* Liquid Glass Background Glows */
-body::before {
-  content:''; position:fixed; bottom:-100px; left:50%; transform:translateX(-50%);
-  width:140vw; height:70vh;
-  background:radial-gradient(ellipse at center bottom, var(--bg-glow-color) 0%, rgba(10,25,100,0.15) 50%, transparent 80%);
-  pointer-events:none; z-index:0; transition: background 0.5s ease;
-}
-body::after {
-  content:''; position:fixed; bottom:-50px; left:50%; transform:translateX(-50%);
-  width:80vw; height:40vh;
-  background:radial-gradient(ellipse at center bottom, rgba(255,255,255,0.05) 0%, transparent 70%);
-  pointer-events:none; z-index:0;
-}
-.stars { position:fixed; inset:0; z-index:0; pointer-events:none; }
-.star { position:absolute; background:white; border-radius:50%; animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s); opacity:0; }
-@keyframes twinkle { 0%,100%{opacity:0} 50%{opacity:var(--max-op,0.6)} }
+body{font-family:'Inter',-apple-system,sans-serif;background:#050810;color:var(--text-primary);height:100vh;overflow:hidden;position:relative;cursor:default;user-select:none;}
+#glow-layer-1{position:fixed;bottom:-100px;left:50%;transform:translateX(-50%);width:140vw;height:70vh;background:radial-gradient(ellipse at center bottom,rgba(var(--glow-r),var(--glow-g),var(--glow-b),0.45) 0%,rgba(var(--glow-r),var(--glow-g),var(--glow-b),0.15) 40%,transparent 70%);pointer-events:none;z-index:0;}
+#glow-layer-2{position:fixed;bottom:-50px;left:50%;transform:translateX(-50%);width:80vw;height:40vh;background:radial-gradient(ellipse at center bottom,rgba(var(--glow-r),var(--glow-g),var(--glow-b),0.25) 0%,transparent 60%);pointer-events:none;z-index:0;}
+.stars{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.star{position:absolute;background:white;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s);opacity:0;}
+@keyframes twinkle{0%,100%{opacity:0}50%{opacity:var(--max-op,0.6)}}
+#viewport{position:fixed;inset:0;z-index:1;overflow:hidden;}
+#world{position:absolute;transform-origin:center center;}
+svg#lines{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:visible;}
+#live-wire-svg{position:fixed;inset:0;z-index:10;pointer-events:none;overflow:visible;}
+.node{position:absolute;z-index:3;transform:translate(-50%,-50%);cursor:pointer;}
+.node-inner{display:flex;flex-direction:column;align-items:center;gap:0;}
+.node-header-photo{width:100%;max-width:160px;border-radius:14px 14px 0 0;overflow:hidden;border:1px solid rgba(255,255,255,0.12);border-bottom:none;}
+.node-header-photo img{width:100%;height:90px;object-fit:cover;display:block;}
+.node-pill{backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:999px;padding:10px 20px;font-size:13px;font-weight:500;letter-spacing:.01em;color:var(--text-primary);white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.08) inset;transition:all .2s ease;display:flex;align-items:center;gap:8px;position:relative;overflow:hidden;}
+.node-pill::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.1) 0%,transparent 50%);pointer-events:none;}
+.node:hover .node-pill{background:var(--glass-hover);border-color:rgba(255,255,255,.28);}
+.node-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor;}
+.node-center .node-pill{padding:16px 32px;font-size:18px;font-weight:600;border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.1);box-shadow:0 0 60px rgba(100,150,255,.15),0 8px 40px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.12) inset;letter-spacing:.02em;}
+.node-photo-only .node-pill{display:none;}
+.node-photo-bubble{border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.15);box-shadow:0 4px 24px rgba(0,0,0,.5);}
+.node-photo-bubble img{width:120px;height:120px;object-fit:cover;display:block;}
+.node.connect-source .node-pill{border-color:#a78bfa!important;box-shadow:0 0 20px rgba(167,139,250,.4),0 4px 24px rgba(0,0,0,.4)!important;}
+.node.connect-target-hover .node-pill{border-color:#34d399!important;box-shadow:0 0 20px rgba(52,211,153,.4),0 4px 24px rgba(0,0,0,.4)!important;}
+.glass-btn{backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:999px;color:var(--text-primary);font-family:inherit;font-size:13px;font-weight:500;padding:10px 20px;cursor:pointer;transition:all .2s ease;display:inline-flex;align-items:center;gap:8px;position:relative;overflow:hidden;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.08) inset;-webkit-tap-highlight-color:transparent;}
+.glass-btn::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.1) 0%,transparent 60%);pointer-events:none;}
+.glass-btn:hover{background:var(--glass-hover);border-color:rgba(255,255,255,.28);transform:translateY(-1px);}
+.glass-btn:active{background:var(--glass-active);transform:translateY(0) scale(.98);}
+.glass-btn.primary{background:rgba(59,130,246,.25);border-color:rgba(59,130,246,.5);color:#93c5fd;}
+.glass-btn.primary:hover{background:rgba(59,130,246,.35);border-color:rgba(59,130,246,.7);}
+.glass-btn.violet{background:rgba(167,139,250,.2);border-color:rgba(167,139,250,.45);color:#c4b5fd;}
+.glass-btn.violet:hover{background:rgba(167,139,250,.3);border-color:rgba(167,139,250,.65);}
+.glass-btn.violet.active{background:rgba(167,139,250,.35);border-color:#a78bfa;}
+.glass-btn.danger{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:#fca5a5;}
+.glass-btn.danger:hover{background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.5);}
+.glass-btn.sm{padding:7px 14px;font-size:12px;}
+#toolbar{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:8px;backdrop-filter:blur(30px) saturate(200%);-webkit-backdrop-filter:blur(30px) saturate(200%);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:8px 12px;box-shadow:0 8px 32px rgba(0,0,0,.4),0 1px 0 rgba(255,255,255,.08) inset;}
+#toolbar-title{font-size:13px;font-weight:500;color:var(--text-secondary);padding:0 8px;}
+.sep{width:1px;height:20px;background:rgba(255,255,255,.12);margin:0 2px;}
+#save-indicator{font-size:11px;color:var(--text-muted);padding:0 6px;transition:opacity .6s;opacity:0;pointer-events:none;}
+#zoom-bar{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:10px;backdrop-filter:blur(20px);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:8px 18px;}
+#zoom-bar span{font-size:11.5px;color:var(--text-muted);}
+#zoom-slider{-webkit-appearance:none;appearance:none;width:140px;height:3px;border-radius:3px;background:rgba(255,255,255,.15);outline:none;cursor:pointer;}
+#zoom-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.7);cursor:pointer;border:2px solid rgba(255,255,255,.3);}
+#zoom-label{font-size:11px;color:var(--text-muted);min-width:36px;text-align:right;}
+#connect-banner{position:fixed;top:90px;left:50%;transform:translateX(-50%);z-index:50;display:none;backdrop-filter:blur(20px);background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.4);border-radius:999px;padding:8px 20px;font-size:12.5px;color:#c4b5fd;gap:10px;align-items:center;}
+#connect-banner.visible{display:flex;}
+#card-panel{position:fixed;right:24px;top:50%;transform:translateY(-50%) translateX(120%);z-index:100;width:340px;max-height:calc(100vh - 100px);backdrop-filter:blur(40px) saturate(200%);-webkit-backdrop-filter:blur(40px) saturate(200%);background:rgba(8,14,30,.88);border:1px solid rgba(255,255,255,.12);border-radius:20px;box-shadow:0 0 60px rgba(30,60,200,.15),0 24px 64px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column;transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .3s ease;opacity:0;}
+#card-panel.open{transform:translateY(-50%) translateX(0);opacity:1;}
+.card-header{padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.card-title-wrap{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+#card-color-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;box-shadow:0 0 10px currentColor;}
+#card-title{font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-close-btn{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:var(--text-secondary);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;}
+.card-close-btn:hover{background:rgba(255,255,255,.15);color:white;}
+.card-body{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px;}
+.card-body::-webkit-scrollbar{width:3px;}
+.card-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px;}
+.card-section-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+.card-divider{height:1px;background:rgba(255,255,255,.06);margin:0 -20px;}
+.color-swatches{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.color-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s;flex-shrink:0;}
+.color-swatch:hover{transform:scale(1.2);}
+.color-swatch.active{border-color:white;box-shadow:0 0 8px currentColor;}
+.color-swatch.custom-swatch{border-radius:8px;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);position:relative;overflow:hidden;}
+.color-swatch.custom-swatch input[type=color]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:none;padding:0;}
+.card-header-photo-wrap{position:relative;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.1);}
+.card-header-photo-wrap img{width:100%;height:110px;object-fit:cover;display:block;}
+.card-header-photo-remove{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);color:white;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.card-header-photo-remove:hover{background:rgba(239,68,68,.7);}
+.linked-node-item,.link-item{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 12px;font-size:12.5px;}
+.linked-node-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.linked-node-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;}
+.linked-node-label:hover{color:#93c5fd;}
+.linked-node-remove,.link-delete{width:18px;height:18px;border-radius:50%;background:rgba(239,68,68,.12);border:none;color:#fca5a5;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.linked-node-remove:hover,.link-delete:hover{background:rgba(239,68,68,.25);}
+.link-icon{width:22px;height:22px;border-radius:6px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.link-url{flex:1;color:#93c5fd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;}
+.link-url:hover{text-decoration:underline;}
+.photos-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.photo-item{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08);cursor:pointer;}
+.photo-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-delete{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);color:white;font-size:11px;cursor:pointer;display:none;align-items:center;justify-content:center;}
+.photo-item:hover .photo-delete{display:flex;}
+.photo-delete:hover{background:rgba(239,68,68,.7);}
+.modal-wrap{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-wrap.open{opacity:1;pointer-events:all;}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);}
+.modal-box{position:relative;z-index:1;width:400px;background:rgba(8,14,30,.97);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:24px;box-shadow:0 0 60px rgba(30,60,200,.2),0 32px 80px rgba(0,0,0,.7);animation:modalIn .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes modalIn{from{transform:scale(.9) translateY(10px);opacity:0}}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.modal-tabs{display:flex;gap:6px;margin-bottom:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:4px;}
+.modal-tab{flex:1;padding:8px;border-radius:9px;background:transparent;border:none;color:var(--text-secondary);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.modal-tab.active{background:rgba(255,255,255,.1);color:var(--text-primary);}
+.modal-tab:hover:not(.active){background:rgba(255,255,255,.05);color:var(--text-primary);}
+.modal-pane{display:none;}.modal-pane.active{display:block;}
+.glass-input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:var(--text-primary);font-family:inherit;font-size:13.5px;padding:11px 14px;outline:none;transition:border-color .2s;margin-bottom:10px;}
+.glass-input:focus{border-color:rgba(59,130,246,.5);background:rgba(255,255,255,.08);}
+.glass-input::placeholder{color:var(--text-muted);}
+.photo-drop{border:1.5px dashed rgba(255,255,255,.15);border-radius:14px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:10px;}
+.photo-drop:hover,.photo-drop.drag-over{border-color:rgba(59,130,246,.5);background:rgba(59,130,246,.05);}
+.photo-drop-text{font-size:12.5px;color:var(--text-secondary);}
+.photo-drop-sub{font-size:11px;color:var(--text-muted);margin-top:4px;}
+.placement-choice{display:flex;gap:8px;margin-bottom:10px;}
+.placement-btn{flex:1;padding:10px 8px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:var(--text-secondary);font-family:inherit;font-size:11.5px;font-weight:500;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.placement-btn:hover{background:rgba(255,255,255,.08);color:var(--text-primary);}
+.placement-btn.active{background:rgba(59,130,246,.2);border-color:rgba(59,130,246,.5);color:#93c5fd;}
+.node-picker-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;margin-bottom:14px;}
+.node-picker-list::-webkit-scrollbar{width:3px;}
+.node-picker-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px;}
+.node-picker-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:all .2s;font-size:13px;}
+.node-picker-item:hover{background:rgba(255,255,255,.08);}
+.node-picker-item.selected{background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.4);}
+.rgb-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.rgb-label{font-size:12px;color:var(--text-secondary);width:14px;text-align:center;font-weight:600;}
+.rgb-slider{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;outline:none;cursor:pointer;}
+.rgb-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,.5);}
+.rgb-val{font-size:12px;color:var(--text-muted);width:28px;text-align:right;}
+#glow-preview{width:100%;height:50px;border-radius:12px;margin-bottom:14px;border:1px solid rgba(255,255,255,.1);}
+#notes-window{position:fixed;z-index:150;width:460px;height:380px;min-width:300px;min-height:240px;background:rgba(8,14,30,.97);border:1px solid rgba(255,255,255,.14);border-radius:16px;box-shadow:0 0 40px rgba(30,60,200,.15),0 20px 60px rgba(0,0,0,.7);display:none;flex-direction:column;overflow:hidden;}
+#notes-window.open{display:flex;}
+#notes-titlebar{padding:12px 14px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px;cursor:move;user-select:none;flex-shrink:0;}
+#notes-titlebar-title{flex:1;font-size:13px;font-weight:500;color:var(--text-secondary);}
+.notes-tb-btn{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:var(--text-secondary);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.notes-tb-btn:hover{background:rgba(255,255,255,.14);color:white;}
+.notes-tb-btn.close:hover{background:rgba(239,68,68,.4);color:#fca5a5;}
+#notes-toolbar{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex-shrink:0;background:rgba(255,255,255,.02);}
+.nt-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:6px;color:var(--text-secondary);font-family:inherit;font-size:11.5px;padding:4px 8px;cursor:pointer;transition:all .15s;}
+.nt-btn:hover{background:rgba(255,255,255,.13);color:white;}
+.nt-sep{width:1px;height:18px;background:rgba(255,255,255,.09);margin:0 2px;}
+.nt-select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:6px;color:var(--text-secondary);font-family:inherit;font-size:11.5px;padding:4px 6px;cursor:pointer;outline:none;}
+.nt-select option{background:#0d1829;color:white;}
+.nt-color-btn{width:24px;height:24px;border-radius:6px;border:1px solid rgba(255,255,255,.15);cursor:pointer;padding:0;position:relative;overflow:hidden;display:inline-flex;}
+.nt-color-btn input[type=color]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:none;}
+#notes-editor{flex:1;padding:16px;outline:none;font-family:'Inter',sans-serif;font-size:14px;line-height:1.7;color:var(--text-primary);overflow-y:auto;min-height:0;}
+#notes-editor:empty::before{content:attr(data-placeholder);color:var(--text-muted);pointer-events:none;}
+#notes-editor img{max-width:100%;border-radius:8px;margin:6px 0;display:block;}
+#notes-editor video{max-width:100%;border-radius:8px;margin:6px 0;display:block;}
+#notes-resize{position:absolute;bottom:0;right:0;width:20px;height:20px;cursor:se-resize;display:flex;align-items:flex-end;justify-content:flex-end;padding:4px;}
+#lightbox{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(10px);}
+#lightbox.open{opacity:1;pointer-events:all;}
+#lightbox img{max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div id="glow-layer-1"></div>
+<div id="glow-layer-2"></div>
+<div id="viewport">
+  <div id="world">
+    <svg id="lines" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+</div>
+<svg id="live-wire-svg" xmlns="http://www.w3.org/2000/svg"></svg>
 
-#canvas { position:fixed; inset:0; z-index:1; cursor:grab; }
-#canvas:active { cursor:grabbing; }
-svg#lines { position:fixed; inset:0; z-index:2; pointer-events:none; overflow:visible; }
+<div id="toolbar">
+  <span id="toolbar-title">&#10022; MindMap</span>
+  <div class="sep"></div>
+  <button class="glass-btn sm" id="btn-addnode">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 4v6M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Add Node
+  </button>
+  <button class="glass-btn sm violet" id="connect-btn">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="2.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="1.5 1.5"/></svg> Connect
+  </button>
+  <button class="glass-btn sm" id="btn-editname">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5L11.5 4.5L5 11H3V9L9.5 2.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg> Name
+  </button>
+  <button class="glass-btn sm" id="btn-glow">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7" r="2.5" stroke="currentColor" stroke-width="1" opacity=".5"/></svg> Glow
+  </button>
+  <div class="sep"></div>
+  <button class="glass-btn sm" id="btn-export">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 2v7M4.5 6.5L7 9l2.5-2.5M2.5 10v1.5h9V10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg> Export
+  </button>
+  <button class="glass-btn sm" id="btn-import">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 9V2M4.5 4.5L7 2l2.5 2.5M2.5 10v1.5h9V10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg> Import
+  </button>
+  <input type="file" id="import-input" accept=".json" style="display:none">
+  <div class="sep"></div>
+  <button class="glass-btn sm" id="btn-center">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7" r="2" fill="currentColor"/></svg> Center
+  </button>
+  <span id="save-indicator">&#10003; Saved</span>
+</div>
 
-/* ── Liquid Nodes ── */
-.node {
-  position:absolute; z-index:3; transform:translate(-50%,-50%);
-  cursor:pointer; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.node:hover { transform: translate(-50%,-50%) scale(1.03); }
-.node-inner { display:flex; flex-direction:column; align-items:center; gap:0; }
+<div id="connect-banner">
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="2.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="1.5 1.5"/></svg>
+  <span id="connect-banner-text">Click a node to start a connection</span>
+  <button class="glass-btn sm" id="btn-cancel-connect">Cancel</button>
+</div>
 
-.node-header-photo {
-  width:100%; max-width:170px; border-radius:24px 24px 0 0; overflow:hidden;
-  border:1px solid rgba(255,255,255,0.1); border-bottom:none;
-  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-}
-.node-header-photo img { width:100%; height:95px; object-fit:cover; display:block; }
+<div id="zoom-bar">
+  <span>&#8722;</span>
+  <input type="range" id="zoom-slider" min="10" max="200" value="100">
+  <span>&#43;</span>
+  <span id="zoom-label">100%</span>
+  <button class="glass-btn sm" id="btn-fitall" style="padding:5px 12px;font-size:11px;">Fit All</button>
+</div>
 
-.node-pill {
-  backdrop-filter:blur(30px) saturate(210%);
-  -webkit-backdrop-filter:blur(30px) saturate(210%);
-  background:var(--glass-bg);
-  border:1px solid var(--glass-border);
-  border-radius:999px; padding:12px 24px;
-  font-size:13.5px; font-weight:500; letter-spacing:0.01em;
-  color:var(--text-primary); white-space:nowrap;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 1px 1px rgba(255,255,255,0.1) inset;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  display:flex; align-items:center; gap:10px;
-}
-.has-header-photo .node-pill { border-radius:0 0 24px 24px; border-top:none; }
+<div id="card-panel">
+  <div class="card-header">
+    <div class="card-title-wrap">
+      <div id="card-color-dot" style="background:#60a5fa;color:#60a5fa;"></div>
+      <div id="card-title">Node</div>
+    </div>
+    <button class="card-close-btn" id="btn-close-card">&#10005;</button>
+  </div>
+  <div class="card-body">
+    <div id="header-photo-section">
+      <div class="card-section-label">Header Photo</div>
+      <div id="header-photo-display"></div>
+      <button class="glass-btn sm" style="width:100%;justify-content:center;" id="add-header-photo-btn">Set Header Photo</button>
+      <input type="file" id="header-photo-input" accept="image/*" style="display:none">
+    </div>
+    <div class="card-divider"></div>
+    <div>
+      <div class="card-section-label">Color</div>
+      <div class="color-swatches" id="color-swatches"></div>
+    </div>
+    <div class="card-divider"></div>
+    <div id="linked-nodes-section" style="display:none">
+      <div class="card-section-label">Linked Nodes</div>
+      <div id="linked-nodes-list"></div>
+    </div>
+    <div id="links-section" style="display:none">
+      <div class="card-section-label">Links</div>
+      <div id="links-list"></div>
+    </div>
+    <div id="photos-section" style="display:none">
+      <div class="card-section-label">Photos</div>
+      <div class="photos-grid" id="photos-grid"></div>
+    </div>
+    <button class="glass-btn" style="width:100%;justify-content:center;" id="btn-open-notes">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 5h5M4.5 7.5h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg> Open Notes
+    </button>
+    <button class="glass-btn violet" style="width:100%;justify-content:center;" id="btn-link-node">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="2.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="1.5 1.5"/></svg> Link to Another Node
+    </button>
+    <button class="glass-btn primary" style="width:100%;justify-content:center;" id="btn-add-media">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 4v6M4 7h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Add Media
+    </button>
+    <button class="glass-btn danger" style="width:100%;justify-content:center;" id="btn-delete-node">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M5.5 3.5V2.5h3V3.5M4.5 3.5l.5 8h4l.5-8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg> Delete Node
+    </button>
+  </div>
+</div>
 
-.node-photo-only .node-pill { display:none; }
-.node-photo-only .node-photo-bubble {
-  border-radius:24px; overflow:hidden;
-  border:1px solid rgba(255,255,255,0.12);
-  box-shadow:0 12px 40px rgba(0,0,0,0.5);
-  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  transition: all 0.3s ease;
-}
-.node-photo-bubble img { width:130px; height:130px; object-fit:cover; display:block; }
+<div id="notes-window">
+  <div id="notes-titlebar">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.3"/></svg>
+    <span id="notes-titlebar-title">Notes</span>
+    <button class="notes-tb-btn close" id="btn-close-notes">&#10005;</button>
+  </div>
+  <div id="notes-toolbar">
+    <select class="nt-select" id="nt-font" title="Font">
+      <option value="Inter">Inter</option>
+      <option value="Merriweather">Merriweather</option>
+      <option value="Playfair Display">Playfair</option>
+      <option value="Source Code Pro">Mono</option>
+    </select>
+    <select class="nt-select" id="nt-size" style="width:52px;" title="Size">
+      <option value="1">10</option><option value="2">12</option><option value="3" selected>14</option>
+      <option value="4">16</option><option value="5">20</option><option value="6">28</option><option value="7">36</option>
+    </select>
+    <div class="nt-sep"></div>
+    <button class="nt-btn" id="nt-bold"><b>B</b></button>
+    <button class="nt-btn" id="nt-italic"><i>I</i></button>
+    <button class="nt-btn" id="nt-underline"><u>U</u></button>
+    <button class="nt-btn" id="nt-strike"><s>S</s></button>
+    <div class="nt-sep"></div>
+    <button class="nt-color-btn" title="Text Color" style="background:linear-gradient(135deg,#fff 50%,#888 50%);">
+      <input type="color" id="nt-fgcolor" value="#ffffff">
+    </button>
+    <button class="nt-color-btn" title="Highlight" style="background:linear-gradient(135deg,#fbbf24 50%,#f59e0b 50%);">
+      <input type="color" id="nt-bgcolor" value="#fbbf24">
+    </button>
+    <div class="nt-sep"></div>
+    <button class="nt-btn" id="nt-left">&#8676;</button>
+    <button class="nt-btn" id="nt-center">&#8611;</button>
+    <button class="nt-btn" id="nt-list">&#8226;&#8801;</button>
+    <div class="nt-sep"></div>
+    <button class="nt-btn" id="nt-img" title="Image">IMG</button>
+    <button class="nt-btn" id="nt-vid" title="Video">VID</button>
+    <input type="file" id="note-img-input" accept="image/*" style="display:none">
+    <input type="file" id="note-vid-input" accept="video/*" style="display:none">
+  </div>
+  <div id="notes-editor" contenteditable="true" data-placeholder="Write your notes here..." spellcheck="false"></div>
+  <div id="notes-resize">
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M9 1L1 9M9 5L5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </div>
+</div>
 
-.node:hover .node-pill {
-  background:var(--glass-hover); border-color:rgba(255,255,255,0.3);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 1px 2px rgba(255,255,255,0.2) inset;
-}
-.node-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; box-shadow:0 0 12px currentColor; }
+<div class="modal-wrap" id="add-node-modal">
+  <div class="modal-backdrop" id="add-node-backdrop"></div>
+  <div class="modal-box">
+    <div class="modal-title"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 5v8M5 9h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> New Node</div>
+    <input class="glass-input" id="new-node-input" placeholder="Node title (blank = photo node)..." maxlength="40">
+    <div style="font-size:11.5px;color:var(--text-muted);margin:-4px 0 14px;">Leave blank to create a photo-only node</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Connect to:</div>
+    <div class="node-picker-list" id="add-node-parent-list"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+      <button class="glass-btn" id="btn-cancel-addnode">Cancel</button>
+      <button class="glass-btn primary" id="btn-confirm-addnode">Add Node</button>
+    </div>
+  </div>
+</div>
 
-.node-center .node-pill {
-  padding:18px 36px; font-size:19px; font-weight:600;
-  border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.08);
-  box-shadow:0 0 50px rgba(255,255,255,0.05), 0 16px 48px rgba(0,0,0,0.5);
+<div class="modal-wrap" id="edit-name-modal">
+  <div class="modal-backdrop" id="edit-name-backdrop"></div>
+  <div class="modal-box">
+    <div class="modal-title"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M12 3L15 6L6.5 14.5H3V11L12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg> Edit Your Name</div>
+    <input class="glass-input" id="edit-name-input" placeholder="Your name..." maxlength="30">
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+      <button class="glass-btn" id="btn-cancel-editname">Cancel</button>
+      <button class="glass-btn primary" id="btn-confirm-editname">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="gradient-modal">
+  <div class="modal-backdrop" id="gradient-backdrop"></div>
+  <div class="modal-box" style="width:320px;">
+    <div class="modal-title">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/></svg>
+      Background Glow Color
+    </div>
+    <div id="glow-preview"></div>
+    <div class="rgb-row">
+      <span class="rgb-label" style="color:#f87171;">R</span>
+      <input type="range" class="rgb-slider" id="glow-r" min="0" max="255" value="15" style="background:linear-gradient(to right,#000,#f87171);">
+      <span class="rgb-val" id="glow-r-val">15</span>
+    </div>
+    <div class="rgb-row">
+      <span class="rgb-label" style="color:#4ade80;">G</span>
+      <input type="range" class="rgb-slider" id="glow-g" min="0" max="255" value="50" style="background:linear-gradient(to right,#000,#4ade80);">
+      <span class="rgb-val" id="glow-g-val">50</span>
+    </div>
+    <div class="rgb-row">
+      <span class="rgb-label" style="color:#60a5fa;">B</span>
+      <input type="range" class="rgb-slider" id="glow-b" min="0" max="255" value="180" style="background:linear-gradient(to right,#000,#60a5fa);">
+      <span class="rgb-val" id="glow-b-val">180</span>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+      <button class="glass-btn" id="btn-close-gradient">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="add-media-modal">
+  <div class="modal-backdrop" id="add-media-backdrop"></div>
+  <div class="modal-box">
+    <div class="modal-title"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 5v8M5 9h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Add Media</div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-link">&#128279; Link</button>
+      <button class="modal-tab" id="tab-photo">&#128247; Photo</button>
+    </div>
+    <div class="modal-pane active" id="pane-link">
+      <input class="glass-input" id="link-url-input" placeholder="https://..." type="url">
+      <input class="glass-input" id="link-label-input" placeholder="Label (optional)">
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="glass-btn" id="btn-cancel-media">Cancel</button>
+        <button class="glass-btn primary" id="btn-confirm-link">Add Link</button>
+      </div>
+    </div>
+    <div class="modal-pane" id="pane-photo">
+      <div class="photo-drop" id="photo-drop">
+        <div style="margin-bottom:8px;color:var(--text-muted);">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="2" y="6" width="28" height="20" rx="3" stroke="currentColor" stroke-width="1.5"/><circle cx="11" cy="13" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 26L10 19L14 23L20 17L29 26" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="photo-drop-text">Click to upload or drag &amp; drop</div>
+        <div class="photo-drop-sub">PNG, JPG, GIF, WebP</div>
+      </div>
+      <input type="file" id="photo-file-input" accept="image/*" multiple style="display:none">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Place photo:</div>
+      <div class="placement-choice">
+        <button class="placement-btn active" id="place-gallery">
+          <svg width="20" height="20" viewBox="0 0 22 22" fill="none"><rect x="2" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/></svg>
+          In gallery
+        </button>
+        <button class="placement-btn" id="place-new-node">
+          <svg width="20" height="20" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.4"/><rect x="7" y="7" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+          New node
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+        <button class="glass-btn" id="btn-done-media">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="lightbox">
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+(function() {
+'use strict';
+
+// ── State ──────────────────────────────────────────────────────────
+const STORAGE_KEY = 'mindmap_v2';
+let centerName = 'Your Name';
+let nodes = [], edges = [];
+let panX = 0, panY = 0, zoom = 1;
+let activeNodeId = null;
+let isPanning = false, panStart = {x:0, y:0};
+let dragNode = null, dragOffset = {x:0, y:0};
+let connectMode = false, connectSource = null;
+let photoPlacement = 'gallery';
+let lastCustomColor = '#a78bfa';
+let glowRGB = {r:15, g:50, b:180};
+
+const NODE_COLORS = [
+  {id:'blue',    color:'#60a5fa'},
+  {id:'violet',  color:'#a78bfa'},
+  {id:'rose',    color:'#fb7185'},
+  {id:'amber',   color:'#fbbf24'},
+  {id:'emerald', color:'#34d399'},
+  {id:'cyan',    color:'#22d3ee'},
+  {id:'pink',    color:'#f472b6'},
+  {id:'white',   color:'#e2e8f0'},
+];
+
+function getColor(id) {
+  if (id && id.startsWith('#')) return id;
+  return (NODE_COLORS.find(c => c.id === id) || NODE_COLORS[0]).color;
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ── Stars ──────────────────────────────────────────────────────────
+function createStars() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div'); s.className = 'star';
+    const sz = Math.random() < .7 ? 1 : Math.random() < .5 ? 1.5 : 2;
+    s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${Math.random()*5}s;--max-op:${.2+Math.random()*.5};`;
+    c.appendChild(s);
+  }
 }
 
-.node.connect-source .node-pill { border-color:#a78bfa; box-shadow:0 0 25px rgba(167,139,250,0.45); }
-.node.connect-target-hover .node-pill { border-color:#34d399; box-shadow:0 0 25px rgba(52,211,153,0.45); }
+// ── Glow ───────────────────────────────────────────────────────────
+function applyGlow() {
+  const {r,g,b} = glowRGB;
+  document.documentElement.style.setProperty('--glow-r', r);
+  document.documentElement.style.setProperty('--glow-g', g);
+  document.documentElement.style.setProperty('--glow-b', b);
+}
+function updateGlowUI() {
+  const {r,g,b} = glowRGB;
+  document.getElementById('glow-r-val').textContent = r;
+  document.getElementById('glow-g-val').textContent = g;
+  document.getElementById('glow-b-val').textContent = b;
+  document.getElementById('glow-preview').style.background =
+    `radial-gradient(ellipse at center,rgba(${r},${g},${b},0.7),rgba(${r},${g},${b},0.1) 60%,transparent)`;
+}
 
-/* ── Apple Glass Buttons ── */
-.glass-btn {
-  backdrop-filter:blur(25px) saturate(190%);
-  -webkit-backdrop-filter:blur(25px) saturate(190%);
-  background:var(--glass-bg); border:1px solid var(--glass-border);
-  border-radius:999px; color:var(--text-primary);
-  font-family:inherit; font-size:13px; font-weight:500;
-  padding:10px 18px; cursor:pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  display:inline-flex; align-items:center; gap:8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.05) inset;
+// ── Viewport/World ─────────────────────────────────────────────────
+const viewport = document.getElementById('viewport');
+const world = document.getElementById('world');
+const svgLines = document.getElementById('lines');
+const liveWireSvg = document.getElementById('live-wire-svg');
+
+function setWorldTransform() {
+  const w = window.innerWidth, h = window.innerHeight;
+  world.style.transform = `translate(${w/2+panX}px,${h/2+panY}px) scale(${zoom})`;
+  world.style.width = '0'; world.style.height = '0';
 }
-.glass-btn:hover {
-  background:var(--glass-hover); border-color:rgba(255,255,255,0.25);
-  transform:translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+function w2s(wx, wy) {
+  const w = window.innerWidth, h = window.innerHeight;
+  return {x: (w/2+panX) + wx*zoom, y: (h/2+panY) + wy*zoom};
 }
-.glass-btn:active { transform:translateY(0) scale(0.97); }
-.glass-btn.primary { background:rgba(59,130,246,0.18); border-color:rgba(59,130,246,0.35); color:#93c5fd; }
-.glass-btn.primary:hover { background:rgba(59,130,246,0.28); border-color:rgba(59,130,246,0.5); }
-.glass-btn.violet { background:rgba(167,139,250,0.15); border-color:rgba(167,139,250,0.35); color:#c4b5fd; }
-.glass-btn.violet.active { background:rgba(167,139,250,0.3); border-color:#a78bfa; }
-.glass-btn.danger { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.25); color:#fca5a5;
+function s2w(sx, sy) {
+  const w = window.innerWidth, h = window.innerHeight;
+  return {x: (sx-(w/2+panX))/zoom, y: (sy-(h/2+panY))/zoom};
+}
+
+// ── Render ─────────────────────────────────────────────────────────
+function renderLines() {
+  svgLines.innerHTML = '';
+  edges.forEach(function(edge) {
+    const a = getNodePos(edge.from);
+    const b = getNodePos(edge.to);
+    const fromNode = edge.from === 'center' ? null : nodes.find(n => n.id === edge.from);
+    const toNode = nodes.find(n => n.id === edge.to);
+    const isActive = (activeNodeId === edge.from || activeNodeId === edge.to);
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const dx = b.x - a.x, dy = b.y - a.y;
+    path.setAttribute('d', `M${a.x},${a.y} C${a.x+dx*.5},${a.y+dy*.1} ${a.x+dx*.5},${b.y-dy*.1} ${b.x},${b.y}`);
+    if (isActive) {
+      const col = getColor(fromNode ? (fromNode.color||'blue') : (toNode ? (toNode.color||'blue') : 'blue'));
+      path.setAttribute('stroke', col + 'bb');
+      path.setAttribute('stroke-width', '2.5');
+    } else {
+      path.setAttribute('stroke', 'rgba(255,255,255,0.22)');
+      path.setAttribute('stroke-width', '1.5');
+    }
+    path.setAttribute('fill', 'none');
+    svgLines.appendChild(path);
+  });
+}
+
+function renderNodes() {
+  Array.from(world.children).forEach(function(c) { if (c !== svgLines) c.remove(); });
+
+  // Center node
+  const ce = document.createElement('div');
+  ce.className = 'node node-center';
+  ce.style.cssText = 'left:0;top:0;';
+  ce.innerHTML = '<div class="node-inner"><div class="node-pill">' + esc(centerName) + '</div></div>';
+  ce.addEventListener('dblclick', openEditNameModal);
+  if (connectMode) {
+    ce.addEventListener('click', function(e) { e.stopPropagation(); handleConnectClick('center'); });
+    if (connectSource && connectSource !== 'center') ce.classList.add('connect-target-hover');
+    if (connectSource === 'center') ce.classList.add('connect-source');
+  }
+  world.appendChild(ce);
+
+  nodes.forEach(function(node) {
+    const color = getColor(node.color || 'blue');
+    const isActive = activeNodeId === node.id;
+    const isPhotoOnly = node.photoOnly;
+    const el = document.createElement('div');
+    el.className = 'node' + (isPhotoOnly ? ' node-photo-only' : '') +
+      (connectMode && connectSource === node.id ? ' connect-source' : '');
+    el.dataset.id = node.id;
+    el.style.cssText = 'left:' + node.x + 'px;top:' + node.y + 'px;';
+
+    let inner = '<div class="node-inner">';
+    if (isPhotoOnly) {
+      const src = node.photos && node.photos.length ? node.photos[0] : '';
+      inner += '<div class="node-photo-bubble" style="' +
+        (isActive ? 'box-shadow:0 0 20px ' + color + '44,0 4px 24px rgba(0,0,0,.5);border-color:' + color + '66;' : '') + '">';
+      if (src) inner += '<img src="' + src + '" alt="">';
+      else inner += '<div style="width:120px;height:120px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);color:var(--text-muted);font-size:11px;">No photo</div>';
+      inner += '</div>';
+    } else {
+      if (node.headerPhoto) inner += '<div class="node-header-photo"><img src="' + node.headerPhoto + '" alt=""></div>';
+      inner += '<div class="node-pill" style="' +
+        (isActive ? 'border-color:' + color + '66;box-shadow:0 0 20px ' + color + '22,0 4px 24px rgba(0,0,0,.4);' : '') +
+        (node.headerPhoto ? 'border-radius:0 0 999px 999px;border-top:none;' : '') + '">' +
+        '<div class="node-dot" style="background:' + color + ';color:' + color + ';"></div>' +
+        esc(node.title) + '</div>';
+    }
+    inner += '</div>';
+    el.innerHTML = inner;
+
+    el.addEventListener('mousedown', function(e) { startNodeDrag(e, node.id); });
+    el.addEventListener('touchstart', function(e) { startNodeDragTouch(e, node.id); }, {passive:false});
+    if (connectMode) {
+      el.addEventListener('click', function(e) { e.stopPropagation(); handleConnectClick(node.id); });
+      if (connectSource && connectSource !== node.id) el.classList.add('connect-target-hover');
+    } else {
+      el.addEventListener('click', function(e) { e.stopPropagation(); openCard(node.id); });
+    }
+    world.appendChild(el);
+  });
+  renderLines();
+  setWorldTransform();
+}
+
+// ── Pan ────────────────────────────────────────────────────────────
+viewport.addEventListener('mousedown', function(e) {
+  if (connectMode) return;
+  const t = e.target;
+  if (t === viewport || t === world || t === svgLines || t.closest('.node-center')) {
+    isPanning = true; panStart = {x: e.clientX - panX, y: e.clientY - panY};
+  }
+});
+window.addEventListener('mousemove', function(e) {
+  if (isPanning && !dragNode) { panX = e.clientX - panStart.x; panY = e.clientY - panStart.y; setWorldTransform(); renderLines(); }
+  if (dragNode) {
+    const node = nodes.find(n => n.id === dragNode);
+    if (node) { const wp = s2w(e.clientX, e.clientY); node.x = wp.x - dragOffset.x; node.y = wp.y - dragOffset.y; renderNodes(); }
+  }
+  if (connectMode && connectSource) {
+    liveWireSvg.innerHTML = '';
+    const srcPos = connectSource === 'center' ? {x:0,y:0} : getNodePos(connectSource);
+    const sc = w2s(srcPos.x, srcPos.y);
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const dx = e.clientX - sc.x, dy = e.clientY - sc.y;
+    path.setAttribute('d', `M${sc.x},${sc.y} C${sc.x+dx*.5},${sc.y} ${sc.x+dx*.5},${e.clientY} ${e.clientX},${e.clientY}`);
+    path.setAttribute('stroke', 'rgba(167,139,250,.55)');
+    path.setAttribute('stroke-width', '2'); path.setAttribute('fill', 'none'); path.setAttribute('stroke-dasharray', '6 4');
+    liveWireSvg.appendChild(path);
+  }
+});
+window.addEventListener('mouseup', function() { isPanning = false; if (!connectMode) dragNode = null; });
+
+let ts2 = null;
+viewport.addEventListener('touchstart', function(e) {
+  if (connectMode || dragNode) return;
+  if (e.touches.length === 1 && (e.target === viewport || e.target === world)) {
+    ts2 = {x: e.touches[0].clientX - panX, y: e.touches[0].clientY - panY};
+  }
+}, {passive:true});
+viewport.addEventListener('touchmove', function(e) {
+  if (ts2 && !dragNode && e.touches.length === 1) { panX = e.touches[0].clientX - ts2.x; panY = e.touches[0].clientY - ts2.y; setWorldTransform(); renderLines(); }
+}, {passive:true});
+viewport.addEventListener('touchend', function() { ts2 = null; });
+
+function startNodeDrag(e, id) {
+  if (connectMode) return;
+  e.preventDefault(); e.stopPropagation(); dragNode = id;
+  const node = nodes.find(n => n.id === id);
+  const wp = s2w(e.clientX, e.clientY);
+  dragOffset = {x: wp.x - node.x, y: wp.y - node.y};
+}
+function startNodeDragTouch(e, id) {
+  if (connectMode || e.touches.length !== 1) return;
+  e.stopPropagation(); dragNode = id;
+  const node = nodes.find(n => n.id === id);
+  const wp = s2w(e.touches[0].clientX, e.touches[0].clientY);
+  dragOffset = {x: wp.x - node.x, y: wp.y - node.y};
+}
+window.addEventListener('touchmove', function(e) {
+  if (dragNode && e.touches.length === 1) {
+    const node = nodes.find(n => n.id === dragNode);
+    if (node) { const wp = s2w(e.touches[0].clientX, e.touches[0].clientY); node.x = wp.x - dragOffset.x; node.y = wp.y - dragOffset.y; renderNodes(); }
+  }
+}, {passive:true});
+window.addEventListener('touchend', function() { dragNode = null; });
+
+// ── Zoom ───────────────────────────────────────────────────────────
+function setZoom(v) {
+  zoom = Math.min(2, Math.max(0.1, v));
+  const sl = document.getElementById('zoom-slider');
+  sl.value = Math.round(zoom * 100);
+  document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+  setWorldTransform(); renderLines();
+}
+document.getElementById('zoom-slider').addEventListener('input', function() { setZoom(this.value / 100); scheduleSave(); });
+viewport.addEventListener('wheel', function(e) {
+  e.preventDefault();
+  setZoom(zoom + (e.deltaY > 0 ? -0.08 : 0.08));
+  scheduleSave();
+}, {passive:false});
+
+function fitAll() {
+  if (!nodes.length) { panX = 0; panY = 0; setZoom(1); return; }
+  const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
+  const minX = Math.min(...xs, 0) - 80, maxX = Math.max(...xs, 0) + 80;
+  const minY = Math.min(...ys, 0) - 80, maxY = Math.max(...ys, 0) + 80;
+  const w = window.innerWidth - 100, h = window.innerHeight - 140;
+  const z = Math.min(w / (maxX - minX), h / (maxY - minY), 1.5);
+  zoom = Math.max(0.1, z);
+  panX = -((minX + maxX) / 2) * zoom;
+  panY = -((minY + maxY) / 2) * zoom;
+  setZoom(zoom); scheduleSave();
+}
+function resetView() { panX = 0; panY = 0; setZoom(1); scheduleSave(); }
+
+// ── Connect ────────────────────────────────────────────────────────
+function getNodePos(id) {
+  if (id === 'center') return {x:0, y:0};
+  const n = nodes.find(n => n.id === id);
+  return n ? {x: n.x, y: n.y} : {x:0, y:0};
+}
+function edgeExists(a, b) { return edges.some(e => (e.from===a&&e.to===b)||(e.from===b&&e.to===a)); }
+
+function toggleConnectMode() {
+  connectMode = !connectMode; connectSource = null; liveWireSvg.innerHTML = '';
+  document.getElementById('connect-btn').classList.toggle('active', connectMode);
+  document.getElementById('connect-banner').classList.toggle('visible', connectMode);
+  document.getElementById('connect-banner-text').textContent = 'Click a node to start a connection';
+  if (connectMode) closeCard();
+  renderNodes();
+}
+function cancelConnect() {
+  connectMode = false; connectSource = null; liveWireSvg.innerHTML = '';
+  document.getElementById('connect-btn').classList.remove('active');
+  document.getElementById('connect-banner').classList.remove('visible');
+  renderNodes();
+}
+function startConnectFromCard() {
+  const src = activeNodeId; closeCard();
+  connectMode = true; connectSource = src;
+  document.getElementById('connect-btn').classList.add('active');
+  document.getElementById('connect-banner').classList.add('visible');
+  document.getElementById('connect-banner-text').textContent = 'Now click the target node';
+  renderNodes();
+}
+function handleConnectClick(id) {
+  if (!connectSource) { connectSource = id; document.getElementById('connect-banner-text').textContent = 'Now click the target node'; renderNodes(); return; }
+  if (id === connectSource) { connectSource = null; liveWireSvg.innerHTML = ''; renderNodes(); return; }
+  if (!edgeExists(connectSource, id)) edges.push({id:'e'+Date.now(), from:connectSource, to:id});
+  cancelConnect(); scheduleSave();
+}
+
+// ── Add Node ───────────────────────────────────────────────────────
+let selectedParent = 'center';
+function openAddNodeModal() {
+  selectedParent = 'center';
+  const list = document.getElementById('add-node-parent-list'); list.innerHTML = '';
+  const ci = document.createElement('div'); ci.className = 'node-picker-item selected'; ci.dataset.id = 'center';
+  ci.innerHTML = '<div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.5);"></div><span>Center (' + esc(centerName) + ')</span>';
+  ci.addEventListener('click', function() { selectedParent = 'center'; list.querySelectorAll('.node-picker-item').forEach(x => x.classList.remove('selected')); ci.classList.add('selected'); });
+  list.appendChild(ci);
+  nodes.forEach(function(n) {
+    if (n.photoOnly) return;
+    const item = document.createElement('div'); item.className = 'node-picker-item'; item.dataset.id = n.id;
+    item.innerHTML = '<div style="width:10px;height:10px;border-radius:50%;background:' + getColor(n.color||'blue') + ';"></div><span>' + esc(n.title) + '</span>';
+    item.addEventListener('click', function() { selectedParent = n.id; list.querySelectorAll('.node-picker-item').forEach(x => x.classList.remove('selected')); item.classList.add('selected'); });
+    list.appendChild(item);
+  });
+  document.getElementById('add-node-modal').classList.add('open');
+  setTimeout(function() { document.getElementById('new-node-input').focus(); }, 100);
+}
+function closeAddNodeModal() { document.getElementById('add-node-modal').classList.remove('open'); document.getElementById('new-node-input').value = ''; }
+function addNode() {
+  const title = document.getElementById('new-node-input').value.trim();
+  const isPhotoOnly = !title;
+  const parentPos = getNodePos(selectedParent);
+  const parentColor = selectedParent === 'center' ? 'blue' : (nodes.find(n => n.id === selectedParent) || {color:'blue'}).color || 'blue';
+  const angle = Math.random() * Math.PI * 2;
+  const id = 'node_' + Date.now();
+  nodes.push({id, title:title||'', photoOnly:isPhotoOnly, x:parentPos.x+Math.cos(angle)*190, y:parentPos.y+Math.sin(angle)*190, color:parentColor, notesHtml:'', links:[], photos:[], headerPhoto:null});
+  edges.push({id:'e'+Date.now(), from:selectedParent, to:id});
+  closeAddNodeModal(); renderNodes(); openCard(id); scheduleSave();
+}
+
+// ── Edit Name ──────────────────────────────────────────────────────
+function openEditNameModal() {
+  document.getElementById('edit-name-modal').classList.add('open');
+  const inp = document.getElementById('edit-name-input'); inp.value = centerName;
+  setTimeout(function() { inp.focus(); inp.select(); }, 100);
+}
+function closeEditNameModal() { document.getElementById('edit-name-modal').classList.remove('open'); }
+function saveEditName() {
+  const v = document.getElementById('edit-name-input').value.trim();
+  if (v) { centerName = v; renderNodes(); scheduleSave(); }
+  closeEditNameModal();
+}
+
+// ── Card ───────────────────────────────────────────────────────────
+function openCard(id) {
+  activeNodeId = id;
+  const node = nodes.find(n => n.id === id); if (!node) return;
+  renderNodes();
+  const color = getColor(node.color || 'blue');
+  document.getElementById('card-title').textContent = node.photoOnly ? 'Photo Node' : node.title;
+  const dot = document.getElementById('card-color-dot'); dot.style.background = color; dot.style.color = color;
+  document.getElementById('header-photo-section').style.display = node.photoOnly ? 'none' : 'block';
+  renderHeaderPhoto(node); renderCardLinks(node); renderCardPhotos(node); renderLinkedNodes(node); renderColorSwatches(node);
+  document.getElementById('card-panel').classList.add('open');
+  if (document.getElementById('notes-window').classList.contains('open')) {
+    document.getElementById('notes-titlebar-title').textContent = (node.photoOnly ? 'Photo Node' : node.title) + ' — Notes';
+    document.getElementById('notes-editor').innerHTML = node.notesHtml || '';
+  }
+}
+function closeCard() { activeNodeId = null; document.getElementById('card-panel').classList.remove('open'); renderNodes(); }
+
+// ── Notes Window ───────────────────────────────────────────────────
+let notesDragging = false, notesDragStart = {x:0, y:0}, notesPos = {x:100, y:100};
+let notesResizing = false, notesResizeStart = {x:0, y:0, w:460, h:380};
+let notesSize = {w:460, h:380};
+
+function openNotesWindow() {
+  if (!activeNodeId) return;
+  const node = nodes.find(n => n.id === activeNodeId); if (!node) return;
+  const win = document.getElementById('notes-window');
+  notesPos = {x: window.innerWidth/2 - notesSize.w/2, y: window.innerHeight/2 - notesSize.h/2};
+  applyNotesGeometry();
+  win.style.display = 'flex'; win.classList.add('open');
+  document.getElementById('notes-titlebar-title').textContent = (node.photoOnly ? 'Photo Node' : node.title) + ' \u2014 Notes';
+  document.getElementById('notes-editor').innerHTML = node.notesHtml || '';
+}
+function closeNotesWindow() { const w = document.getElementById('notes-window'); w.classList.remove('open'); w.style.display = 'none'; }
+function applyNotesGeometry() {
+  const win = document.getElementById('notes-window');
+  win.style.left = notesPos.x + 'px'; win.style.top = notesPos.y + 'px';
+  win.style.width = notesSize.w + 'px'; win.style.height = notesSize.h + 'px';
+}
+document.getElementById('notes-titlebar').addEventListener('mousedown', function(e) {
+  if (e.target.classList.contains('notes-tb-btn')) return;
+  notesDragging = true; notesDragStart = {x: e.clientX - notesPos.x, y: e.clientY - notesPos.y}; e.preventDefault();
+});
+window.addEventListener('mousemove', function(e) {
+  if (notesDragging) { notesPos = {x: e.clientX - notesDragStart.x, y: e.clientY - notesDragStart.y}; applyNotesGeometry(); }
+  if (notesResizing) { notesSize = {w: Math.max(300, notesResizeStart.w + e.clientX - notesResizeStart.x), h: Math.max(240, notesResizeStart.h + e.clientY - notesResizeStart.y)}; applyNotesGeometry(); }
+});
+window.addEventListener('mouseup', function() { notesDragging = false; notesResizing = false; });
+document.getElementById('notes-resize').addEventListener('mousedown', function(e) {
+  notesResizing = true; notesResizeStart = {x:e.clientX, y:e.clientY, w:notesSize.w, h:notesSize.h}; e.preventDefault(); e.stopPropagation();
+});
+
+function execCmd(cmd, val) {
+  document.getElementById('notes-editor').focus();
+  document.execCommand(cmd, false, val || null);
+  saveNotesFromEditor();
+}
+function saveNotesFromEditor() {
+  if (!activeNodeId) return;
+  const node = nodes.find(n => n.id === activeNodeId); if (!node) return;
+  node.notesHtml = document.getElementById('notes-editor').innerHTML;
+  scheduleSave();
+}
+document.getElementById('notes-editor').addEventListener('input', saveNotesFromEditor);
+document.getElementById('notes-editor').addEventListener('keydown', function(e) {
+  if (e.key === 'Tab') { e.preventDefault(); document.execCommand('insertHTML', false, '&nbsp;&nbsp;&nbsp;&nbsp;'); }
+});
+
+// ── Header Photo ───────────────────────────────────────────────────
+function renderHeaderPhoto(node) {
+  const wrap = document.getElementById('header-photo-display'); wrap.innerHTML = '';
+  const btn = document.getElementById('add-header-photo-btn');
+  if (node.headerPhoto) {
+    wrap.innerHTML = '<div class="card-header-photo-wrap" style="margin-bottom:8px;"><img src="' + node.headerPhoto + '" alt=""><button class="card-header-photo-remove" id="remove-header-photo-btn">\u2715</button></div>';
+    document.getElementById('remove-header-photo-btn').addEventListener('click', removeHeaderPhoto);
+    btn.textContent = 'Change Header Photo';
+  } else {
+    btn.textContent = 'Set Header Photo';
+  }
+}
+function removeHeaderPhoto() {
+  const n = nodes.find(n => n.id === activeNodeId); if (!n) return;
+  n.headerPhoto = null; renderHeaderPhoto(n); renderNodes(); scheduleSave();
+}
+
+// ── Linked Nodes ───────────────────────────────────────────────────
+function renderLinkedNodes(node) {
+  const sec = document.getElementById('linked-nodes-section');
+  const list = document.getElementById('linked-nodes-list'); list.innerHTML = '';
+  const nodeEdges = edges.filter(e => e.from === node.id || e.to === node.id);
+  if (!nodeEdges.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  nodeEdges.forEach(function(edge) {
+    const otherId = edge.from === node.id ? edge.to : edge.from;
+    const otherNode = otherId === 'center' ? null : nodes.find(n => n.id === otherId);
+    const otherLabel = otherId === 'center' ? centerName : (otherNode ? otherNode.title : 'Unknown');
+    const otherColor = otherId === 'center' ? '#e2e8f0' : getColor((otherNode||{}).color || 'blue');
+    const item = document.createElement('div'); item.className = 'linked-node-item';
+    const label = document.createElement('span'); label.className = 'linked-node-label'; label.textContent = otherLabel;
+    if (otherId !== 'center') label.addEventListener('click', function() { openCard(otherId); });
+    const dot = document.createElement('div'); dot.className = 'linked-node-dot'; dot.style.cssText = 'background:' + otherColor + ';box-shadow:0 0 6px ' + otherColor + '88;';
+    const removeBtn = document.createElement('button'); removeBtn.className = 'linked-node-remove'; removeBtn.textContent = '\u2715';
+    removeBtn.addEventListener('click', (function(eid) { return function() { disconnectEdge(eid); }; })(edge.id));
+    item.appendChild(dot); item.appendChild(label); item.appendChild(removeBtn);
+    list.appendChild(item);
+  });
+}
+function disconnectEdge(id) { edges = edges.filter(e => e.id !== id); const n = nodes.find(n => n.id === activeNodeId); if (n) { renderLinkedNodes(n); renderNodes(); } scheduleSave(); }
+
+// ── Color Swatches ─────────────────────────────────────────────────
+function renderColorSwatches(node) {
+  const c = document.getElementById('color-swatches'); c.innerHTML = '';
+  NODE_COLORS.forEach(function(col) {
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch' + (node.color === col.id ? ' active' : '');
+    sw.style.cssText = 'background:' + col.color + ';box-shadow:0 0 8px ' + col.color + '44;';
+    sw.addEventListener('click', function() { node.color = col.id; openCard(node.id); renderNodes(); scheduleSave(); });
+    c.appendChild(sw);
+  });
+  const custom = document.createElement('div');
+  custom.className = 'color-swatch custom-swatch' + (node.color && node.color.startsWith('#') ? ' active' : '');
+  custom.title = 'Custom color';
+  const inp = document.createElement('input'); inp.type = 'color';
+  inp.value = (node.color && node.color.startsWith('#')) ? node.color : lastCustomColor;
+  inp.addEventListener('input', function(e) {
+    lastCustomColor = e.target.value; node.color = e.target.value;
+    custom.classList.add('active');
+    c.querySelectorAll('.color-swatch:not(.custom-swatch)').forEach(function(s) { s.classList.remove('active'); });
+    renderNodes(); scheduleSave();
+  });
+  custom.appendChild(inp); c.appendChild(custom);
+}
+
+// ── Links ──────────────────────────────────────────────────────────
+function renderCardLinks(node) {
+  const sec = document.getElementById('links-section');
+  const list = document.getElementById('links-list'); list.innerHTML = '';
+  if (!node.links || !node.links.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  node.links.forEach(function(link, i) {
+    const item = document.createElement('div'); item.className = 'link-item';
+    const icon = document.createElement('div'); icon.className = 'link-icon'; icon.innerHTML = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M4 7L7 4M2.5 5.5L1.5 6.5a2 2 0 002.8 2.8L5.5 8M8 5.5l1-1A2 2 0 006.2 1.7L5 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>';
+    const a = document.createElement('a'); a.className = 'link-url'; a.href = link.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = link.label || link.url;
+    const del = document.createElement('button'); del.className = 'link-delete'; del.textContent = '\u2715';
+    del.addEventListener('click', (function(idx) { return function() { deleteLink(idx); }; })(i));
+    item.appendChild(icon); item.appendChild(a); item.appendChild(del); list.appendChild(item);
+  });
+}
+function deleteLink(i) { const n = nodes.find(n => n.id === activeNodeId); if (!n) return; n.links.splice(i, 1); renderCardLinks(n); scheduleSave(); }
+
+// ── Photos ─────────────────────────────────────────────────────────
+function renderCardPhotos(node) {
+  const sec = document.getElementById('photos-section');
+  const grid = document.getElementById('photos-grid'); grid.innerHTML = '';
+  if (!node.photos || !node.photos.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  node.photos.forEach(function(photo, i) {
+    const item = document.createElement('div'); item.className = 'photo-item';
+    const img = document.createElement('img'); img.src = photo; img.alt = '';
+    img.addEventListener('click', function() { openLightbox(photo); });
+    const del = document.createElement('button'); del.className = 'photo-delete'; del.textContent = '\u2715';
+    del.addEventListener('click', (function(idx) { return function(e) { e.stopPropagation(); deletePhoto(idx); }; })(i));
+    item.appendChild(img); item.appendChild(del); grid.appendChild(item);
+  });
+}
+function deletePhoto(i) { const n = nodes.find(n => n.id === activeNodeId); if (!n) return; n.photos.splice(i, 1); if (n.photoOnly) renderNodes(); renderCardPhotos(n); scheduleSave(); }
+function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').classList.add('open'); }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+
+// ── Delete Node ────────────────────────────────────────────────────
+function deleteCurrentNode() {
+  if (!activeNodeId) return;
+  edges = edges.filter(e => e.from !== activeNodeId && e.to !== activeNodeId);
+  nodes = nodes.filter(n => n.id !== activeNodeId);
+  activeNodeId = null; closeCard(); closeNotesWindow(); renderNodes(); scheduleSave();
+}
+
+// ── Media Modal ────────────────────────────────────────────────────
+function openAddMediaModal() {
+  document.getElementById('add-media-modal').classList.add('open');
+  document.getElementById('tab-link').classList.add('active'); document.getElementById('tab-photo').classList.remove('active');
+  document.getElementById('pane-link').classList.add('active'); document.getElementById('pane-photo').classList.remove('active');
+}
+function closeAddMediaModal() {
+  document.getElementById('add-media-modal').classList.remove('open');
+  document.getElementById('link-url-input').value = ''; document.getElementById('link-label-input').value = '';
+}
+function addLink() {
+  const url = document.getElementById('link-url-input').value.trim(); if (!url) return;
+  const label = document.getElementById('link-label-input').value.trim();
+  const node = nodes.find(n => n.id === activeNodeId); if (!node) return;
+  if (!node.links) node.links = [];
+  node.links.push({url, label: label || url}); renderCardLinks(node); closeAddMediaModal(); scheduleSave();
+}
+function processPhotoFiles(files) {
+  Array.from(files).filter(f => f.type.startsWith('image/')).forEach(function(file) {
+    const r = new FileReader();
+    r.onload = function(ev) {
+      const src = ev.target.result;
+      if (photoPlacement === 'new-node') {
+        const parentNode = nodes.find(n => n.id === activeNodeId);
+        const pp = parentNode ? {x:parentNode.x, y:parentNode.y} : {x:0, y:0};
+        const pc = parentNode ? (parentNode.color || 'blue') : 'blue';
+        const angle = Math.random() * Math.PI * 2;
+        const id = 'node_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+        nodes.push({id, title:'', photoOnly:true, x:pp.x+Math.cos(angle)*160, y:pp.y+Math.sin(angle)*160, color:pc, notesHtml:'', links:[], photos:[src], headerPhoto:null});
+        edges.push({id:'e'+Date.now()+'_'+id, from:activeNodeId, to:id});
+        renderNodes();
+      } else {
+        const node = nodes.find(n => n.id === activeNodeId); if (!node) return;
+        if (!node.photos) node.photos = [];
+        node.photos.push(src);
+        if (node.photoOnly) renderNodes();
+        renderCardPhotos(node);
+      }
+      scheduleSave();
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+// ── Export/Import ──────────────────────────────────────────────────
+function exportData() {
+  const state = {centerName, nodes, edges, panX, panY, zoom, glowRGB, lastCustomColor};
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'mindmap-export.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(file) {
+  const r = new FileReader();
+  r.onload = function(ev) {
+    try {
+      const state = JSON.parse(ev.target.result);
+      centerName = state.centerName || 'Your Name';
+      nodes = state.nodes || []; edges = state.edges || [];
+      panX = state.panX || 0; panY = state.panY || 0; zoom = state.zoom || 1;
+      glowRGB = state.glowRGB || {r:15,g:50,b:180};
+      lastCustomColor = state.lastCustomColor || '#a78bfa';
+      applyGlow();
+      document.getElementById('zoom-slider').value = Math.round(zoom * 100);
+      document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+      renderNodes(); scheduleSave();
+    } catch(err) { alert('Could not import: invalid file.'); }
+  };
+  r.readAsText(file);
+}
+
+// ── Save/Load ──────────────────────────────────────────────────────
+let _saveTimer = null;
+function scheduleSave() { clearTimeout(_saveTimer); _saveTimer = setTimeout(persistSave, 500); }
+function persistSave() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({centerName,nodes,edges,panX,panY,zoom,glowRGB,lastCustomColor}));
+    const ind = document.getElementById('save-indicator');
+    ind.style.opacity = '1'; setTimeout(function() { ind.style.opacity = '0'; }, 1500);
+  } catch(e) { console.warn('Save failed', e); }
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return false;
+    const state = JSON.parse(raw);
+    centerName = state.centerName || 'Your Name';
+    nodes = state.nodes || []; edges = state.edges || [];
+    panX = state.panX || 0; panY = state.panY || 0; zoom = state.zoom || 1;
+    glowRGB = state.glowRGB || {r:15,g:50,b:180};
+    lastCustomColor = state.lastCustomColor || '#a78bfa';
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── Wire up all buttons (no inline onclick) ────────────────────────
+document.getElementById('btn-addnode').addEventListener('click', openAddNodeModal);
+document.getElementById('connect-btn').addEventListener('click', toggleConnectMode);
+document.getElementById('btn-editname').addEventListener('click', openEditNameModal);
+document.getElementById('btn-glow').addEventListener('click', function() {
+  document.getElementById('glow-r').value = glowRGB.r;
+  document.getElementById('glow-g').value = glowRGB.g;
+  document.getElementById('glow-b').value = glowRGB.b;
+  updateGlowUI();
+  document.getElementById('gradient-modal').classList.add('open');
+});
+document.getElementById('btn-export').addEventListener('click', exportData);
+document.getElementById('btn-import').addEventListener('click', function() { document.getElementById('import-input').click(); });
+document.getElementById('import-input').addEventListener('change', function(e) { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
+document.getElementById('btn-center').addEventListener('click', resetView);
+document.getElementById('btn-fitall').addEventListener('click', fitAll);
+document.getElementById('btn-cancel-connect').addEventListener('click', cancelConnect);
+document.getElementById('btn-close-card').addEventListener('click', closeCard);
+document.getElementById('btn-open-notes').addEventListener('click', openNotesWindow);
+document.getElementById('btn-close-notes').addEventListener('click', closeNotesWindow);
+document.getElementById('btn-link-node').addEventListener('click', startConnectFromCard);
+document.getElementById('btn-add-media').addEventListener('click', openAddMediaModal);
+document.getElementById('btn-delete-node').addEventListener('click', deleteCurrentNode);
+document.getElementById('add-header-photo-btn').addEventListener('click', function() { document.getElementById('header-photo-input').click(); });
+document.getElementById('header-photo-input').addEventListener('change', function(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader(); r.onload = function(ev) { const n = nodes.find(n => n.id === activeNodeId); if (!n) return; n.headerPhoto = ev.target.result; renderHeaderPhoto(n); renderNodes(); scheduleSave(); }; r.readAsDataURL(file); e.target.value = '';
+});
+document.getElementById('add-node-backdrop').addEventListener('click', closeAddNodeModal);
+document.getElementById('btn-cancel-addnode').addEventListener('click', closeAddNodeModal);
+document.getElementById('btn-confirm-addnode').addEventListener('click', addNode);
+document.getElementById('new-node-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') addNode(); });
+document.getElementById('edit-name-backdrop').addEventListener('click', closeEditNameModal);
+document.getElementById('btn-cancel-editname').addEventListener('click', closeEditNameModal);
+document.getElementById('btn-confirm-editname').addEventListener('click', saveEditName);
+document.getElementById('edit-name-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') saveEditName(); });
+document.getElementById('gradient-backdrop').addEventListener('click', function() { document.getElementById('gradient-modal').classList.remove('open'); });
+document.getElementById('btn-close-gradient').addEventListener('click', function() { document.getElementById('gradient-modal').classList.remove('open'); });
+document.getElementById('glow-r').addEventListener('input', function() { glowRGB.r = +this.value; updateGlowUI(); applyGlow(); scheduleSave(); });
+document.getElementById('glow-g').addEventListener('input', function() { glowRGB.g = +this.value; updateGlowUI(); applyGlow(); scheduleSave(); });
+document.getElementById('glow-b').addEventListener('input', function() { glowRGB.b = +this.value; updateGlowUI(); applyGlow(); scheduleSave(); });
+document.getElementById('add-media-backdrop').addEventListener('click', closeAddMediaModal);
+document.getElementById('btn-cancel-media').addEventListener('click', closeAddMediaModal);
+document.getElementById('btn-done-media').addEventListener('click', closeAddMediaModal);
+document.getElementById('btn-confirm-link').addEventListener('click', addLink);
+document.getElementById('tab-link').addEventListener('click', function() {
+  document.getElementById('tab-link').classList.add('active'); document.getElementById('tab-photo').classList.remove('active');
+  document.getElementById('pane-link').classList.add('active'); document.getElementById('pane-photo').classList.remove('active');
+});
+document.getElementById('tab-photo').addEventListener('click', function() {
+  document.getElementById('tab-photo').classList.add('active'); document.getElementById('tab-link').classList.remove('active');
+  document.getElementById('pane-photo').classList.add('active'); document.getElementById('pane-link').classList.remove('active');
+});
+document.getElementById('photo-drop').addEventListener('click', function() { document.getElementById('photo-file-input').click(); });
+document.getElementById('photo-drop').addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('drag-over'); });
+document.getElementById('photo-drop').addEventListener('dragleave', function() { this.classList.remove('drag-over'); });
+document.getElementById('photo-drop').addEventListener('drop', function(e) { e.preventDefault(); this.classList.remove('drag-over'); processPhotoFiles(e.dataTransfer.files); });
+document.getElementById('photo-file-input').addEventListener('change', function(e) { processPhotoFiles(e.target.files); e.target.value = ''; });
+document.getElementById('place-gallery').addEventListener('click', function() { photoPlacement='gallery'; document.getElementById('place-gallery').classList.add('active'); document.getElementById('place-new-node').classList.remove('active'); });
+document.getElementById('place-new-node').addEventListener('click', function() { photoPlacement='new-node'; document.getElementById('place-new-node').classList.add('active'); document.getElementById('place-gallery').classList.remove('active'); });
+document.getElementById('lightbox').addEventListener('click', closeLightbox);
+// Notes toolbar
+document.getElementById('nt-bold').addEventListener('click', function() { execCmd('bold'); });
+document.getElementById('nt-italic').addEventListener('click', function() { execCmd('italic'); });
+document.getElementById('nt-underline').addEventListener('click', function() { execCmd('underline'); });
+document.getElementById('nt-strike').addEventListener('click', function() { execCmd('strikeThrough'); });
+document.getElementById('nt-left').addEventListener('click', function() { execCmd('justifyLeft'); });
+document.getElementById('nt-center').addEventListener('click', function() { execCmd('justifyCenter'); });
+document.getElementById('nt-list').addEventListener('click', function() { execCmd('insertUnorderedList'); });
+document.getElementById('nt-font').addEventListener('change', function() { execCmd('fontName', this.value); });
+document.getElementById('nt-size').addEventListener('change', function() { execCmd('fontSize', this.value); });
+document.getElementById('nt-fgcolor').addEventListener('input', function() { execCmd('foreColor', this.value); });
+document.getElementById('nt-bgcolor').addEventListener('input', function() { execCmd('hiliteColor', this.value); });
+document.getElementById('nt-img').addEventListener('click', function() { document.getElementById('note-img-input').click(); });
+document.getElementById('nt-vid').addEventListener('click', function() { document.getElementById('note-vid-input').click(); });
+document.getElementById('note-img-input').addEventListener('change', function(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader(); r.onload = function(ev) { document.getElementById('notes-editor').focus(); document.execCommand('insertHTML', false, '<img src="' + ev.target.result + '" style="max-width:100%;border-radius:8px;margin:4px 0;">'); saveNotesFromEditor(); }; r.readAsDataURL(file); e.target.value = '';
+});
+document.getElementById('note-vid-input').addEventListener('change', function(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader(); r.onload = function(ev) { document.getElementById('notes-editor').focus(); document.execCommand('insertHTML', false, '<video controls src="' + ev.target.result + '" style="max-width:100%;border-radius:8px;margin:4px 0;"></video>'); saveNotesFromEditor(); }; r.readAsDataURL(file); e.target.value = '';
+});
+
+// ── Init ───────────────────────────────────────────────────────────
+createStars();
+const loaded = loadState();
+if (!loaded) {
+  nodes = [
+    {id:'n1',title:'Projects',photoOnly:false,x:-220,y:-130,color:'blue',notesHtml:'',links:[],photos:[],headerPhoto:null},
+    {id:'n2',title:'Goals',photoOnly:false,x:160,y:-190,color:'emerald',notesHtml:'',links:[],photos:[],headerPhoto:null},
+    {id:'n3',title:'Inspiration',photoOnly:false,x:260,y:80,color:'violet',notesHtml:'',links:[],photos:[],headerPhoto:null},
+    {id:'n4',title:'Contacts',photoOnly:false,x:-50,y:210,color:'amber',notesHtml:'',links:[],photos:[],headerPhoto:null},
+    {id:'n5',title:'Ideas',photoOnly:false,x:-230,y:110,color:'rose',notesHtml:'',links:[],photos:[],headerPhoto:null},
+  ];
+  edges = [
+    {id:'e1',from:'center',to:'n1'},{id:'e2',from:'center',to:'n2'},
+    {id:'e3',from:'center',to:'n3'},{id:'e4',from:'center',to:'n4'},
+    {id:'e5',from:'center',to:'n5'},
+  ];
+}
+applyGlow();
+document.getElementById('zoom-slider').value = Math.round(zoom * 100);
+document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+renderNodes();
+
+})(); // end IIFE
+</script>
+</body>
+</html>"""
+
+with open('/mnt/user-data/outputs/mindmap.html', 'w', encoding='utf-8') as f:
+    f.write(content)
+
+print(f"Written: {len(content)} chars, {content.count(chr(10))} lines")
